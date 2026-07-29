@@ -104,6 +104,38 @@ Verified request DTOs (from `internal/web/dto/validation.go`,
 Missing (NOT in router — added via backend PR, see §7):
 `GET /season/state`, `GET /engines`, `GET /budget`, `POST /ready`, `POST /fire`.
 
+### JSON casing (verified — IMPORTANT)
+
+Data handlers serialize raw `internal/models` structs directly via `c.JSON`.
+Structs **without** json tags therefore emit **PascalCase, Go-field-name keys**,
+while a few structs carry explicit tags. Client DTOs must map the ACTUAL casing
+per endpoint (use `@JsonKey(name: ...)`), NOT assume snake_case. We do **not**
+reshape backend response models (would break the CLI and other consumers, and is
+outside the agreed backend-PR scope).
+
+- PascalCase (untagged models): `GET /pilots` (`Pilot`: `ID,Name,Garage,Team,
+  Rating,QualifyingRating,DrivingStyle,Experience,Adaptiveness,Emotions,Stability,
+  Rain,SettingsAngle,Starting,TyreManagement,MistakePossibility,Price,Sponsors,
+  CarFit`), `GET /teams` (`Team`: `ID,Name,ICE,CarLevel,BaseLevel,Engineer,
+  SimLevel,TubeLevel,UpdateRating,Tokens,Budget,IsManufacturer,CarSettings`),
+  `GET /principals` (`TeamPrincipal`: `ID,Name,Price,TeamID,Level`),
+  `GET /track` (`Track`: `ID,Name,DownForceLevel,Type,Difficulty,QualifyingImpact,
+  RainPossibility,Tyre`), `GET /players` (`Player`: `ID,Name,TeamPrincipal,Team,
+  Budget,Tokens`), `GET /players/squads` (`PlayerProfile`: `ID,Name,TeamPrincipal,
+  Team,Pilot1,Pilot2,Budget,Tokens`).
+- Tagged: `GET /my-team` outer keys `{id, pilot1, pilot2, team, team_principal}`
+  with PascalCase INSIDE the nested `Pilot`/`Team`/`TeamPrincipal`;
+  `GET /race-result` → `{stage, results:[{pilot_id, garage_id, pilot_name,
+  team_name, quali_position, race_position, points, is_dnf, dnf_reason}]}`;
+  auth `{access_token, refresh_token}`; `GET /standing` → `{drivers, teams}`
+  (verify handler once implemented — `standing` currently stubbed).
+- All enums (`DrivingStyle`, `SettingsAngle`, `ICEName`, `IsManufacturer`,
+  `TrackType`, `DownForce`, `QualifyingImpact`, `DriverEmotion`, `DriverStability`,
+  `RainDriving`) serialize as their **integer** iota value.
+
+Each DTO's `fromJson` MUST be verified field-by-field against the Go struct
+during implementation.
+
 ## 5. WebSocket layer
 
 `WsService` connects immediately after login and reconnects with exponential
