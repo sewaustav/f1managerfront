@@ -157,6 +157,28 @@ Outgoing:
 `WsService` exposes a typed broadcast stream; each feature subscribes to the
 message kinds it cares about via a Riverpod provider.
 
+### WS auth + connect timing (verified against backend — IMPORTANT)
+
+`GET /ws` (`HandleWs`) is behind the JWT middleware, which reads the token
+**only from the `Authorization: Bearer` header** (`pkg/middleware/jwt/middleware.go`
+— no query-param fallback), and additionally rejects the handshake with 400 if
+the user is **not in a group** (`GetUserGroup` must be non-nil).
+
+Consequences:
+- **Connect timing:** open the WS only AFTER the user has a group (after
+  lobby create/join), not immediately after login. Pre-group phases (auth,
+  lobby) run over REST only.
+- **Mobile/desktop:** `IOWebSocketChannel.connect(url, headers: {'Authorization':
+  'Bearer <access>'})` works — send the header.
+- **Web:** browser `WebSocket` cannot set custom headers, so the header path is
+  impossible on Web. Web support (a hard ТЗ requirement) therefore needs a
+  **backend PR** making the WS endpoint also accept the access token via a
+  `?token=` query param (or `Sec-WebSocket-Protocol`). Added to §7. Until then,
+  Web WS is degraded/unavailable; mobile/desktop are unaffected.
+- `WsService` sends the token BOTH ways (header on IO via a platform-conditional
+  channel factory, and `?token=` query on the URL) so it works on IO now and on
+  Web as soon as the backend PR lands.
+
 ## 6. Phase-driven navigation
 
 `GoRouter` with a redirect guard backed by a `seasonStateProvider`
@@ -188,6 +210,11 @@ Add to the backend repo, each on its own branch/PR:
 - `POST /ready` → inter-season: player is ready for the new season
 - `POST /fire` → `{who:"pilot"|"principal", id:int}`
 - WS `season_started` broadcast when all players are ready
+- **WS token via query (needed for Web):** make `GET /ws` accept the access
+  token via `?token=<jwt>` (validated the same way as the `Authorization`
+  header) so browsers — which cannot set WS headers — can authenticate. Without
+  this, the Web platform cannot open the WebSocket. Higher priority than the
+  other PRs because it blocks a core platform requirement.
 
 Frontend consumes these contracts. Where an endpoint is not yet merged, the
 corresponding provider runs a documented degraded mode (manual input / stub)
