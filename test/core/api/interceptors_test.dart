@@ -41,6 +41,25 @@ void main() {
       expect(captured, isNotNull);
       expect(captured!.containsKey('Authorization'), isFalse);
     });
+
+    test('DOES attach bearer to /auth/logout (authenticated endpoint)', () async {
+      final store = InMemoryTokenStore();
+      await store.save(access: 'AAA', refresh: 'r');
+      final dio = Dio(BaseOptions(baseUrl: 'http://x/api/v1'));
+      Map<String, dynamic>? captured;
+      dio.interceptors.add(AuthInterceptor(store));
+      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        captured = Map<String, dynamic>.from(options.headers);
+        handler.next(options);
+      }));
+      final adapter = DioAdapter(dio: dio);
+      adapter.onPost('/auth/logout', (s) => s.reply(200, {'ok': true}));
+
+      final r = await dio.post('/auth/logout');
+
+      expect(r.statusCode, 200);
+      expect(captured!['Authorization'], 'Bearer AAA');
+    });
   });
 
   group('RefreshInterceptor', () {
