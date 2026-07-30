@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
+import '../../../core/ws/ws_providers.dart';
 import '../application/lobby_controller.dart';
 import '../model/player.dart';
 
@@ -88,6 +89,8 @@ class _GroupLobby extends ConsumerWidget {
   const _GroupLobby();
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keep the authenticated WebSocket alive while the user is in a group.
+    ref.watch(wsMessagesProvider);
     final players = ref.watch(playersProvider);
     final ctrl = ref.read(lobbyControllerProvider.notifier);
     return Column(
