@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'ws_message.dart';
 
@@ -34,6 +35,9 @@ class WsService {
   bool _disposed = false;
   Timer? _retryTimer;
 
+  @visibleForTesting
+  int get attempt => _attempt;
+
   Future<void> start() async {
     if (_disposed) return;
     final token = await accessToken();
@@ -41,6 +45,13 @@ class WsService {
     try {
       final channel = _connect(uri);
       _channel = channel;
+      // WebSocketChannel.connect() returns synchronously and connects in the
+      // background — a real failure (server down/unreachable) surfaces
+      // asynchronously via `ready`, not as a synchronous throw. Gate
+      // "connection succeeded" on `ready` so backoff only resets and
+      // onReconnect only fires once the socket is actually usable.
+      await channel.ready;
+      if (_disposed) return;
       _attempt = 0;
       await onReconnect?.call();
       _sub = channel.stream.listen(
