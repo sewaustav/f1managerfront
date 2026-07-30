@@ -71,7 +71,11 @@ class WsService {
     if (_disposed) return;
     _sub?.cancel();
     final delay = backoffDelay(_attempt);
-    _attempt++;
+    // Cap the counter once the delay has saturated at backoffDelay's 30s
+    // ceiling (reached at attempt == 5, since 1 << 5 == 32 > 30) so it can
+    // never grow large enough for `1 << _attempt` to overflow a 64-bit int
+    // and wrap negative.
+    if (_attempt < 5) _attempt++;
     _retryTimer = Timer(delay, start);
   }
 

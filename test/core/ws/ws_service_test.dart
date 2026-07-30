@@ -51,6 +51,38 @@ void main() {
     },
   );
 
+  test(
+    'repeated failed connects saturate the attempt counter and never '
+    'produce a non-positive backoff delay',
+    () async {
+      when(
+        () => channel.ready,
+      ).thenAnswer((_) async => throw Exception('down'));
+      when(() => channel.stream).thenAnswer((_) => const Stream.empty());
+
+      final service = WsService(
+        wsUrl: 'ws://example.com/ws',
+        accessToken: () async => 'tok',
+        connect: (_) => channel,
+      );
+
+      // Drive 8 consecutive failed connect attempts directly (no reliance on
+      // the real Timer firing). Each call's failed `ready` runs
+      // `_scheduleReconnect`, which increments `_attempt` (clamped at 5) and
+      // arms a `_retryTimer` for the next `start()` — we cancel/replace that
+      // by calling `start()` ourselves, then `dispose()` at the end so no
+      // Timer lingers.
+      for (var i = 0; i < 8; i++) {
+        await service.start();
+      }
+
+      expect(service.attempt, 5);
+      expect(backoffDelay(service.attempt), const Duration(seconds: 30));
+
+      await service.dispose();
+    },
+  );
+
   test('successful connect resets attempt and fires onReconnect once', () async {
     final streamController = StreamController<dynamic>.broadcast();
     addTearDown(streamController.close);
