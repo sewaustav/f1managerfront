@@ -20,6 +20,12 @@ List<int> allowedEngineChoices(Team team, List<Engine> engines) {
 
 String engineLabel(int ice) => ice == kIceSelf ? 'Self / default' : 'Engine #$ice';
 
+/// Maps a chosen engine value to the `engine` argument for `POST /draft/pick`.
+/// The backend's `resolveEngine` only takes the Client self/default path when
+/// the `engine` field is OMITTED (nil) — an explicit `Self` (kIceSelf) value is
+/// not a real engine row and would be rejected. So "self" must be sent as null.
+int? engineArgForPick(int chosen) => chosen == kIceSelf ? null : chosen;
+
 Future<int?> showEngineModal(
   BuildContext context, {
   required Team team,

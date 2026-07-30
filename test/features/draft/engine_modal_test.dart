@@ -23,4 +23,10 @@ void main() {
     const t = Team(id: 1, name: 'C', ice: 0, isManufacturer: 2);
     expect(allowedEngineChoices(t, engines), [0, 1, kIceSelf]);
   });
+
+  test('engineArgForPick omits engine (null) for self, keeps real engines', () {
+    expect(engineArgForPick(kIceSelf), isNull); // backend self path needs field omitted
+    expect(engineArgForPick(0), 0);
+    expect(engineArgForPick(3), 3);
+  });
 }

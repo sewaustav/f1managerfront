@@ -76,9 +76,11 @@ class DraftScreen extends ConsumerWidget {
                         final engines = await ref.read(enginesProvider.future);
                         if (!context.mounted) return;
                         final engine = await showEngineModal(context, team: t, engines: engines);
-                        if (engine == null) return;
+                        if (engine == null) return; // cancelled
+                        // "Self / default" (kIceSelf) must be sent as an omitted
+                        // engine field so the backend takes the self path.
                         await ref.read(draftControllerProvider.notifier)
-                            .submitPick(pick: 1, itemId: t.id, engine: engine);
+                            .submitPick(pick: 1, itemId: t.id, engine: engineArgForPick(engine));
                         ref.invalidate(budgetProvider);
                       },
                     ),
