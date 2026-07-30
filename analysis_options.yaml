@@ -9,6 +9,14 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # freezed generates JsonKey-annotated constructor parameters; the analyzer
+  # flags these as an "invalid annotation target" even though json_serializable
+  # handles them correctly. This is a known false positive documented by the
+  # freezed package itself, suppressed here rather than per-file.
+  errors:
+    invalid_annotation_target: ignore
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
