@@ -10,26 +10,28 @@ Future<void> main() async {
   final tokenStore = SecureTokenStore();
   final hasToken = (await tokenStore.readAccess()) != null;
 
+  final container = ProviderContainer(
+    overrides: [tokenStoreProvider.overrideWithValue(tokenStore)],
+  );
+
+  // Seed auth state synchronously, before the first build/redirect.
+  if (hasToken) {
+    container.read(isAuthenticatedProvider.notifier).state = true;
+  }
+
   runApp(
-    ProviderScope(
-      overrides: [tokenStoreProvider.overrideWithValue(tokenStore)],
-      child: _Bootstrap(initiallyAuthed: hasToken),
+    UncontrolledProviderScope(
+      container: container,
+      child: const _Bootstrap(),
     ),
   );
 }
 
 class _Bootstrap extends ConsumerWidget {
-  const _Bootstrap({required this.initiallyAuthed});
-  final bool initiallyAuthed;
+  const _Bootstrap();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Seed auth state once from stored token.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (initiallyAuthed) {
-        ref.read(isAuthenticatedProvider.notifier).state = true;
-      }
-    });
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'F1 Manager',
