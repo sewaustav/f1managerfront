@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../models/season_state.dart';
 import '../api/auth_state.dart';
 import '../../shared/widgets/placeholder_screen.dart';
+import '../../features/lobby/application/lobby_controller.dart';
 
 String routeForPhase(SeasonPhase phase) {
   switch (phase) {
@@ -40,13 +41,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: _AuthListenable(ref),
     redirect: (context, state) {
       final authed = ref.read(isAuthenticatedProvider);
-      // hasGroup / phase are wired in the Auth+Lobby + Season plans via providers;
-      // for the foundation they default to (false, null) so routing lands on
-      // /lobby once authenticated.
+      final hasGroup = ref.read(hasGroupProvider);
       return redirectLogic(
         authed: authed,
-        hasGroup: false,
-        phase: null,
+        hasGroup: hasGroup,
+        phase: null, // wired by the Season plan (seasonStateProvider)
         location: state.uri.path,
       );
     },
@@ -64,5 +63,6 @@ final routerProvider = Provider<GoRouter>((ref) {
 class _AuthListenable extends ChangeNotifier {
   _AuthListenable(Ref ref) {
     ref.listen(isAuthenticatedProvider, (_, __) => notifyListeners());
+    ref.listen(hasGroupProvider, (_, __) => notifyListeners());
   }
 }
