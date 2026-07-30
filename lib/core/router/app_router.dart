@@ -5,6 +5,7 @@ import '../models/season_state.dart';
 import '../api/auth_state.dart';
 import '../../shared/widgets/placeholder_screen.dart';
 import '../../features/lobby/application/lobby_controller.dart';
+import '../../features/lobby/presentation/lobby_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 
 String routeForPhase(SeasonPhase phase) {
@@ -52,7 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
-      GoRoute(path: '/lobby', builder: (_, __) => const PlaceholderScreen('Lobby')),
+      GoRoute(path: '/lobby', builder: (_, __) => const LobbyScreen()),
       GoRoute(path: '/draft', builder: (_, __) => const PlaceholderScreen('Draft')),
       GoRoute(path: '/token-setup', builder: (_, __) => const PlaceholderScreen('Token Setup')),
       GoRoute(path: '/season', builder: (_, __) => const PlaceholderScreen('Season')),
