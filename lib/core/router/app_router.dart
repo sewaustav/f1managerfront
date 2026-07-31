@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/season_state.dart';
 import '../api/auth_state.dart';
-import '../../shared/widgets/placeholder_screen.dart';
 import '../../features/lobby/application/lobby_controller.dart';
 import '../../features/lobby/presentation/lobby_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/draft/presentation/draft_screen.dart';
 import '../../features/season/presentation/token_setup_screen.dart';
 import '../../features/season/presentation/race_screen.dart';
+import '../../features/inter_season/presentation/inter_season_screen.dart';
 
 String routeForPhase(SeasonPhase phase) {
   switch (phase) {
@@ -60,7 +60,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/draft', builder: (_, __) => const DraftScreen()),
       GoRoute(path: '/token-setup', builder: (_, __) => const TokenSetupScreen()),
       GoRoute(path: '/season', builder: (_, __) => const RaceScreen()),
-      GoRoute(path: '/inter-season', builder: (_, __) => const PlaceholderScreen('Inter-Season')),
+      GoRoute(path: '/inter-season', builder: (_, __) => const InterSeasonScreen()),
     ],
   );
 });
