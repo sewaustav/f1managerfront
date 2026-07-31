@@ -1,3 +1,5 @@
+import '../model/setup_preset.dart';
+
 class SetupValues {
   const SetupValues({
     this.aeroDynamic = 0,
@@ -37,3 +39,8 @@ int setupSpent(SetupValues v) =>
 int setupRemaining(SetupValues v, int pool) => pool - setupSpent(v);
 
 bool setupValid(SetupValues v, int pool) => setupSpent(v) <= pool;
+
+/// Sum of a preset's 6 setup fields (excludes settingsAngle), used to guard
+/// against loading a preset whose total exceeds the available token pool.
+int presetTotal(SetupPreset p) =>
+    p.aeroDynamic + p.engine + p.chassis + p.floor + p.tyres + p.reliability;

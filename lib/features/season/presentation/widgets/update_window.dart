@@ -43,7 +43,7 @@ Future<void> showUpdateWindow(
               key: const Key('confirm_update'),
               onPressed: () {
                 final amount = int.tryParse(coast.text.trim()) ?? 0;
-                onSubmit(type, type == 0 ? amount.clamp(0, 15) : amount);
+                onSubmit(type, type == 0 ? amount.clamp(0, 15) : (amount < 0 ? 0 : amount));
                 Navigator.pop(ctx);
               },
               child: const Text('Apply'),

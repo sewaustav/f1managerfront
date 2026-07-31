@@ -5,8 +5,10 @@ import '../../../shared/widgets/error_snackbar.dart';
 import '../application/season_controller.dart';
 import '../application/setup_math.dart';
 import '../data/season_repository.dart';
+import '../data/setup_preset_store.dart';
 import '../model/race_result.dart';
 import '../model/setup_payload.dart';
+import '../model/setup_preset.dart';
 import '../model/track_info.dart';
 import 'token_setup_screen.dart';
 import 'widgets/setup_form.dart';
@@ -57,9 +59,24 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
 
     final tracks = ref.watch(tracksProvider);
     final pool = ref.watch(tokenPoolProvider);
+    final presets = ref.watch(setupPresetStoreProvider).load();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Race setup')),
+      appBar: AppBar(
+        title: const Text('Race setup'),
+        actions: [
+          if (presets.isNotEmpty)
+            PopupMenuButton<int>(
+              key: const Key('race_presets'),
+              icon: const Icon(Icons.folder_open),
+              onSelected: (i) => _loadPreset(presets[i], pool.valueOrNull ?? 0),
+              itemBuilder: (_) => [
+                for (var i = 0; i < presets.length; i++)
+                  PopupMenuItem(value: i, child: Text(presets[i].name)),
+              ],
+            ),
+        ],
+      ),
       body: AsyncValueView<List<TrackInfo>>(
         value: tracks,
         onRetry: () => ref.invalidate(tracksProvider),
@@ -109,6 +126,17 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
         },
       ),
     );
+  }
+
+  void _loadPreset(SetupPreset p, int pool) {
+    if (presetTotal(p) > pool) {
+      showErrorSnackbar(context, 'Preset exceeds the available $pool tokens');
+      return;
+    }
+    setState(() => _values = SetupValues(
+          aeroDynamic: p.aeroDynamic, engine: p.engine, chassis: p.chassis,
+          floor: p.floor, tyres: p.tyres, reliability: p.reliability, settingsAngle: p.settingsAngle,
+        ));
   }
 
   SetupPayload _payload() => SetupPayload(

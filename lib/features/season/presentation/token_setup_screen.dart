@@ -77,10 +77,16 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
     );
   }
 
-  void _loadPreset(SetupPreset p) => setState(() => _values = SetupValues(
-        aeroDynamic: p.aeroDynamic, engine: p.engine, chassis: p.chassis,
-        floor: p.floor, tyres: p.tyres, reliability: p.reliability, settingsAngle: p.settingsAngle,
-      ));
+  void _loadPreset(SetupPreset p, int pool) {
+    if (presetTotal(p) > pool) {
+      showErrorSnackbar(context, 'Preset exceeds the available $pool tokens');
+      return;
+    }
+    setState(() => _values = SetupValues(
+          aeroDynamic: p.aeroDynamic, engine: p.engine, chassis: p.chassis,
+          floor: p.floor, tyres: p.tyres, reliability: p.reliability, settingsAngle: p.settingsAngle,
+        ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +99,7 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
           if (presets.isNotEmpty)
             PopupMenuButton<int>(
               icon: const Icon(Icons.folder_open),
-              onSelected: (i) => _loadPreset(presets[i]),
+              onSelected: (i) => _loadPreset(presets[i], pool.valueOrNull ?? 0),
               itemBuilder: (_) => [
                 for (var i = 0; i < presets.length; i++)
                   PopupMenuItem(value: i, child: Text(presets[i].name)),
