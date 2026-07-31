@@ -122,8 +122,14 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
 
   Future<void> _maybeShowUpdate(int stage) async {
     if (!mounted) return;
-    await showUpdateWindow(context, stage: stage, onSubmit: (type, coast) {
-      ref.read(seasonRepositoryProvider).makeUpdate(type: type, coast: coast, stage: stage);
+    await showUpdateWindow(context, stage: stage, onSubmit: (type, coast) async {
+      try {
+        await ref
+            .read(seasonRepositoryProvider)
+            .makeUpdate(type: type, coast: coast, stage: stage);
+      } catch (e) {
+        if (mounted) showErrorSnackbar(context, e);
+      }
     });
   }
 }
