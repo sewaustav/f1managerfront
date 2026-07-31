@@ -28,7 +28,10 @@ class _SetupFormState extends State<SetupForm> {
 
   Widget _slider(String label, String key, int value, ValueChanged<int> onChange) {
     final remaining = setupRemaining(_v, widget.pool);
-    final max = (value + remaining).clamp(0, widget.pool).toDouble();
+    // This slider's own ceiling is its current value plus whatever the pool has
+    // left. When nothing is left (maxVal == value == 0), the slider is pinned at
+    // 0 (disabled, no divisions) so the total can never exceed the pool.
+    final maxVal = (value + remaining).clamp(0, widget.pool).toDouble();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,10 +40,10 @@ class _SetupFormState extends State<SetupForm> {
           key: Key(key),
           value: value.toDouble(),
           min: 0,
-          max: max == 0 ? 1 : max,
-          divisions: max <= 0 ? 1 : max.toInt(),
+          max: maxVal,
+          divisions: maxVal > 0 ? maxVal.toInt() : null,
           label: '$value',
-          onChanged: (d) => onChange(d.round()),
+          onChanged: maxVal > 0 ? (d) => onChange(d.round()) : null,
         ),
       ],
     );
