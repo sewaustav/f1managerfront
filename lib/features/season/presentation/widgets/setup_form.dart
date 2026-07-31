@@ -21,6 +21,16 @@ class SetupForm extends StatefulWidget {
 class _SetupFormState extends State<SetupForm> {
   late SetupValues _v = widget.initial;
 
+  @override
+  void didUpdateWidget(SetupForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Resync when the parent hands us a new `initial` (e.g. loading a preset)
+    // so the sliders reflect the loaded values instead of the stale capture.
+    if (!identical(widget.initial, oldWidget.initial)) {
+      _v = widget.initial;
+    }
+  }
+
   void _update(SetupValues next) {
     setState(() => _v = next);
     widget.onChanged(next);

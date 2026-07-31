@@ -27,4 +27,25 @@ void main() {
 
     expect(find.byKey(const Key('tokens_remaining')), findsOneWidget);
   });
+
+  testWidgets('loading a new initial (preset) resyncs the sliders', (tester) async {
+    final notifier = ValueNotifier<SetupValues>(const SetupValues(aeroDynamic: 3));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ValueListenableBuilder<SetupValues>(
+          valueListenable: notifier,
+          builder: (_, values, __) =>
+              SetupForm(pool: 35, initial: values, onChanged: (_) {}),
+        ),
+      ),
+    ));
+    expect(tester.widget<Slider>(find.byKey(const Key('slider_aero'))).value, 3);
+
+    // Simulate loading a preset: parent hands SetupForm a new `initial`.
+    notifier.value = const SetupValues(aeroDynamic: 8, engine: 4);
+    await tester.pump();
+
+    expect(tester.widget<Slider>(find.byKey(const Key('slider_aero'))).value, 8);
+    expect(tester.widget<Slider>(find.byKey(const Key('slider_engine'))).value, 4);
+  });
 }
