@@ -31,4 +31,23 @@ void main() {
 
     verify(() => repo.createGroup(const CreateGroupRequest(name: 'Reds', password: 'pw'))).called(1);
   });
+
+  testWidgets('group state: shows Group ID with a copy button', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getPlayers()).thenAnswer((_) async => const []);
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        lobbyRepositoryProvider.overrideWithValue(repo),
+        hasGroupProvider.overrideWith((ref) => true),
+        myGroupIdProvider.overrideWith((ref) => 42),
+      ],
+      child: const MaterialApp(home: LobbyScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('group_id_display')), findsOneWidget);
+    expect(find.textContaining('42'), findsOneWidget);
+    expect(find.byKey(const Key('copy_group_id_button')), findsOneWidget);
+  });
 }

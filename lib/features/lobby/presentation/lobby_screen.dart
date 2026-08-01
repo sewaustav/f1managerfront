@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
@@ -92,9 +93,30 @@ class _GroupLobby extends ConsumerWidget {
     // Keep the authenticated WebSocket alive while the user is in a group.
     ref.watch(wsMessagesProvider);
     final players = ref.watch(playersProvider);
+    final groupId = ref.watch(myGroupIdProvider);
     final ctrl = ref.read(lobbyControllerProvider.notifier);
     return Column(
       children: [
+        if (groupId != null)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    key: const Key('group_id_display'),
+                    'Group ID: $groupId  (share this to invite others)',
+                  ),
+                ),
+                IconButton(
+                  key: const Key('copy_group_id_button'),
+                  icon: const Icon(Icons.copy),
+                  tooltip: 'Copy group ID',
+                  onPressed: () => Clipboard.setData(ClipboardData(text: '$groupId')),
+                ),
+              ],
+            ),
+          ),
         Expanded(
           child: AsyncValueView<List<Player>>(
             value: players,
