@@ -27,6 +27,7 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
     _dialogOpen = true;
     final offer = offers.first;
     final accept = await showIncomingOfferDialog(context, offer);
+    if (!mounted) return;
     _dialogOpen = false;
     if (accept != null) {
       ref.read(interSeasonControllerProvider.notifier).respondToOffer(offer, accept: accept);
