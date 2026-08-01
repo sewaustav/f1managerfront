@@ -5,19 +5,19 @@ import 'package:f1manager/features/inter_season/model/my_team_summary.dart';
 
 void main() {
   test('transferRequestFromMessage parses pilot_id + price', () {
-    final m = WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40});
+    const m = WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40});
     final r = transferRequestFromMessage(m)!;
     expect(r.pilotId, 7);
     expect(r.price, 40);
   });
 
   test('transferRequestFromMessage returns null for other types', () {
-    expect(transferRequestFromMessage(WsMessage('draft_turn', {'type': 'draft_turn'})), isNull);
+    expect(transferRequestFromMessage(const WsMessage('draft_turn', {'type': 'draft_turn'})), isNull);
   });
 
   test('isSeasonStarted true only for season_started', () {
-    expect(isSeasonStarted(WsMessage('season_started', {'type': 'season_started'})), isTrue);
-    expect(isSeasonStarted(WsMessage('race_finished', {'type': 'race_finished'})), isFalse);
+    expect(isSeasonStarted(const WsMessage('season_started', {'type': 'season_started'})), isTrue);
+    expect(isSeasonStarted(const WsMessage('race_finished', {'type': 'race_finished'})), isFalse);
   });
 
   test('transferResponsePayload shape', () {

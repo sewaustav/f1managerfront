@@ -34,7 +34,7 @@ void main() {
     addTearDown(c.dispose);
     c.listen(interSeasonControllerProvider, (_, __) {}); // start listening (keeps autoDispose alive)
 
-    ws.add(WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40}));
+    ws.add(const WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40}));
     await Future<void>.delayed(Duration.zero);
     final offer = c.read(interSeasonControllerProvider).incomingOffers.single;
     expect(offer.pilotId, 7);
@@ -53,7 +53,7 @@ void main() {
     ]);
     addTearDown(c.dispose);
     c.listen(interSeasonControllerProvider, (_, __) {});
-    ws.add(WsMessage('season_started', {'type': 'season_started'}));
+    ws.add(const WsMessage('season_started', {'type': 'season_started'}));
     await Future<void>.delayed(Duration.zero);
     expect(c.read(interSeasonControllerProvider).seasonStarted, isTrue);
   });
