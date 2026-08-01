@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_guard.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
 import '../application/draft_controller.dart';
@@ -23,7 +24,7 @@ class DraftScreen extends ConsumerWidget {
       }
     });
     ref.listen(draftControllerProvider.select((s) => s.finished), (_, finished) {
-      if (finished) context.go('/token-setup');
+      if (finished && isCurrentLocation(context, '/draft')) context.go('/token-setup');
     });
 
     final canPick = draft.isMyTurn && !draft.submitting;

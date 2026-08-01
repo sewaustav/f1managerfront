@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:f1manager/core/models/pilot.dart';
 import 'package:f1manager/core/models/principal.dart';
+import 'package:f1manager/core/router/app_shell.dart';
 import 'package:f1manager/core/ws/ws_providers.dart';
 import 'package:f1manager/core/ws/ws_service.dart';
 import 'package:f1manager/core/ws/ws_message.dart';
@@ -235,5 +236,115 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('offstage nav guard', () {
+    GoRouter buildShellRouter({required String initialLocation}) {
+      return GoRouter(
+        initialLocation: initialLocation,
+        routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (context, state, shell) => AppShell(navigationShell: shell),
+            branches: [
+              StatefulShellBranch(routes: [
+                GoRoute(
+                  path: '/inter-season',
+                  builder: (_, __) => const InterSeasonScreen(),
+                ),
+                GoRoute(
+                  path: '/token-setup',
+                  builder: (_, __) => const Scaffold(body: Text('token-setup')),
+                ),
+              ]),
+              StatefulShellBranch(routes: [
+                GoRoute(path: '/standings', builder: (_, __) => const Text('STANDINGS')),
+              ]),
+              StatefulShellBranch(routes: [
+                GoRoute(path: '/info', builder: (_, __) => const Text('INFO')),
+              ]),
+              StatefulShellBranch(routes: [
+                GoRoute(path: '/my-team', builder: (_, __) => const Text('MYTEAM')),
+              ]),
+            ],
+          ),
+        ],
+      );
+    }
+
+    testWidgets(
+        'season_started while a DIFFERENT branch is active does not navigate away',
+        (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.binding.setSurfaceSize(const Size(400, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final ws = StreamController<WsMessage>.broadcast();
+      addTearDown(ws.close);
+
+      // Start on the InterSeason branch so it gets built (StatefulShellBranch
+      // branches are lazily built on first visit), then switch to the
+      // Standings branch — exactly like a user tabbing away. IndexedStack
+      // keeps InterSeasonScreen mounted offstage from then on.
+      final router = buildShellRouter(initialLocation: '/inter-season');
+
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          wsMessagesProvider.overrideWith((ref) => ws.stream),
+          wsServiceProvider.overrideWithValue(_FakeWs()),
+          draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+          interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byType(InterSeasonScreen), findsOneWidget);
+
+      await tester.tap(find.text('Standings'));
+      await tester.pumpAndSettle();
+
+      // InterSeasonScreen is mounted offstage (IndexedStack keeps every
+      // branch alive), but the user is looking at Standings. Finders skip
+      // offstage widgets by default, so opt back in to prove it's still
+      // there — just not visible.
+      expect(find.text('STANDINGS'), findsOneWidget);
+      expect(find.byType(InterSeasonScreen, skipOffstage: false), findsOneWidget);
+
+      ws.add(const WsMessage('season_started', {'type': 'season_started'}));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // The WS-driven auto-navigation must NOT hijack the user off the tab
+      // they're on.
+      expect(find.text('STANDINGS'), findsOneWidget);
+      expect(find.text('token-setup'), findsNothing);
+    });
+
+    testWidgets('season_started while the InterSeason branch is active navigates',
+        (tester) async {
+      final ws = StreamController<WsMessage>.broadcast();
+      addTearDown(ws.close);
+
+      final router = buildShellRouter(initialLocation: '/inter-season');
+
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          wsMessagesProvider.overrideWith((ref) => ws.stream),
+          wsServiceProvider.overrideWithValue(_FakeWs()),
+          draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+          interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ));
+      await tester.pumpAndSettle();
+
+      ws.add(const WsMessage('season_started', {'type': 'season_started'}));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('token-setup'), findsOneWidget);
+    });
   });
 }

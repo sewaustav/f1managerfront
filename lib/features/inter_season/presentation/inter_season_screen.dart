@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_guard.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
 import '../application/inter_season_controller.dart';
@@ -58,7 +59,7 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
     ref.listen(interSeasonControllerProvider, (prev, next) {
       if (next.incomingOffers.isNotEmpty) _drainOffers();
       if (next.seasonStarted && (prev?.seasonStarted != true)) {
-        context.go('/token-setup');
+        if (isCurrentLocation(context, '/inter-season')) context.go('/token-setup');
       }
       if (next.error != null && prev?.error != next.error) {
         showErrorSnackbar(context, next.error!);
