@@ -48,12 +48,21 @@ void main() {
 
   test('unknown id falls back to #id', () async {
     final c = ProviderContainer(overrides: [
-      seasonRepositoryProvider.overrideWithValue(_FakeSeasonRepo()),
+      // driver 99 has points but no matching pilot in getPilots -> '#99'
+      seasonRepositoryProvider
+          .overrideWithValue(_UnknownIdSeasonRepo()),
       draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
     ]);
     addTearDown(c.dispose);
-    // team 99 not in getTeams -> '#99'
-    final rows = await c.read(teamStandingsProvider.future);
-    expect(rows.any((r) => r.name == 'RB'), isTrue);
+    final rows = await c.read(driverStandingsProvider.future);
+    expect(rows.single.name, '#99');
+    expect(rows.single.points, 7);
   });
+}
+
+class _UnknownIdSeasonRepo extends SeasonRepository {
+  _UnknownIdSeasonRepo() : super(Dio());
+  @override
+  Future<Standing> getStanding() async =>
+      const Standing(drivers: {'99': 7}, teams: {});
 }
