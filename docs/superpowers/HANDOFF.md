@@ -1,7 +1,7 @@
 # HANDOFF — F1 Manager Flutter frontend
 
-Date: 2026-07-31. Branch: **`feat/frontend`** (HEAD `7f0ca9a`, 45 commits above `main`).
-Status: **Plans 1–4 of 7 complete.** 92 tests green, `flutter analyze` clean, `flutter build web` passes.
+Date: 2026-08-01. Branch: **`feat/frontend`** (HEAD `f2d157e`, 58 commits above `main`).
+Status: **Plans 1–5 of 7 complete.** 120 tests green, `flutter analyze` clean, `flutter build web` passes.
 
 You are continuing a multi-plan build of the F1 Manager Flutter app (iOS/Android/Web) against an existing Go backend. Work proceeds as a **series of 7 plans**, each built with the **superpowers:subagent-driven-development** (SDD) workflow: write a plan → dispatch a fresh implementer subagent per task (TDD) → per-task review subagent → integrate → final whole-branch integration review → fix findings.
 
@@ -62,11 +62,10 @@ You are continuing a multi-plan build of the F1 Manager Flutter app (iOS/Android
 
 ## 6. Remaining work
 
-### Plan 5 — Inter-season (NEXT)
-Spec §5.7. Screens: transfers (free pilots + other players' pilots with prices → `POST /transfers/pilot {pilot_id, price}`; incoming offers via WS `transfer_request {pilot_id, price}` → reply with outgoing WS `transfer_response {type:"transfer_response", pilot_id, accept}`); hire principal (`POST /transfers/principal {principal_id, price}`); fire pilot/principal (`POST /fire {who:"pilot"|"principal", id}` — **backend PR needed**); base investment sliders (`POST /base {base≤10, engineer≤5, tube≤5, sim≤5}`); current base state from `GET /my-team`; ready for new season (`POST /ready` — **backend PR needed**) + WS `season_started` (**backend PR needed**).
-**Before writing the plan:** discover the backend transfer/fire/base handlers in `/Users/maks/f1manager` (grep `PilotTransfer`, `PrincipalTransfer`, `UpdateBase`, and check whether `/fire`, `/ready`, `season_started` exist — they don't yet, so scope a backend PR like Plan 3 did for engines/budget). `WsService.send()` is the outgoing-message path for `transfer_response`.
+### Plan 5 — Inter-season ✅ DONE
+Plan: `plans/2026-07-31-05-inter-season.md`. Feature `lib/features/inter_season/` (transfers of free + peer-owned pilots, incoming-offer dialog via WS, hire/fire principal, fire pilot via a MyPilotsList roster, base sliders, ready-for-new-season, budget in AppBar). InterSeasonScreen (Transfers/Principal/Base/Ready tabs) replaces the placeholder. **Backend PR #5** — https://github.com/sewaustav/f1manager/pull/5 — `POST /fire`, `POST /ready`, WS `season_started` (base `feature/draft-module`; adds `DynamicRepo.Fire` to `new_storage` + a `ReadyTracker` dispatcher). Degraded until Plan 7: `season_started` → manual `context.go('/token-setup')` (no `GET /season/state` yet).
 
-### Plan 6 — Standings + Info + My Team (always-available tabs)
+### Plan 6 — Standings + Info + My Team (always-available tabs) (NEXT)
 Spec §5.8/5.9/5.10. WDC/WCC from `GET /standing` (Standing model already exists in features/season). My Team from `GET /my-team` + `GET /budget`. Info: `GET /track`, `GET /players/squads`, `GET /pilots`. Introduce a **shell route with bottom-nav/rail** layering these tabs over the game flow. Good place to also add the logout button (and the deferred logout-state cleanup fix).
 
 ### Plan 7 — Backend PRs + wiring
@@ -74,7 +73,7 @@ Spec §5.8/5.9/5.10. WDC/WCC from `GET /standing` (Standing model already exists
 
 ## 7. Immediate next step
 
-Continue with **Plan 5**: use `superpowers:brainstorming` only if scope is unclear (it isn't — spec §5.7 is detailed); otherwise go straight to `superpowers:writing-plans` to author `docs/superpowers/plans/2026-07-31-05-inter-season.md` after discovering the backend transfer/base handlers, then execute via `superpowers:subagent-driven-development` exactly as Plans 2–4 did (parallel worktrees for independent tasks; sequential for shared-file tasks). Keep the ledger and the build-progress memory updated as you go.
+Continue with **Plan 6** (Standings + Info + My Team + shell nav + logout). Spec §5.8/5.9/5.10. Go straight to `superpowers:writing-plans` (scope is clear), then execute via `superpowers:subagent-driven-development`. Introduce a **shell route with bottom-nav/rail** layering the always-available tabs over the game flow; add the logout button here and fix the deferred logout-state cleanup (reset `hasGroupProvider` + WS providers). `Standing` model already exists in `features/season`. Note the Plan 5 execution ran tasks **sequentially in the main tree** (backend T1 in a background agent; per-task reviewers in background) rather than parallel worktrees — simpler and reliable; the double-review loop (task review + Opus final integration review) caught 3 real bugs incl. the whole incoming-offer subsystem being UI-unreachable, so keep the final integration review on the most capable model. Keep the ledger + build-progress memory updated as you go.
 
 ## 8. Finishing
 
