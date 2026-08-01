@@ -1,0 +1,88 @@
+# Full F1 Manager stack — `docker compose up --build`.
+#
+# Assumes the two repos are siblings:
+#   /Users/maks/f1manager       (backend, build context ../f1manager)
+#   /Users/maks/f1managerfront  (frontend, this repo — where this file lives)
+#
+# After startup:
+#   frontend  -> http://localhost:8081
+#   backend   -> http://localhost:8080/api/v1
+#
+# The Postgres schema is auto-applied from the backend's migration on FIRST boot
+# of the db volume (see the initdb.d mount). The static game data (pilots/tracks/
+# engines/principals) is NOT seeded — see DOCKER.md "Seeding" before playing the
+# game; auth + lobby work without it.
+name: f1manager
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: f1
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # applied once, in name order, when pgdata is first created:
+      # 001 = schema (migration), 002 = static game data (pilots/tracks/engines/…)
+      - ../f1manager/migrations/20260702185021_initial_migration.up.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ../f1manager/initial_data/seed_postgres.sql:/docker-entrypoint-initdb.d/002_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d f1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  backend:
+    build:
+      context: ../f1manager
+    environment:
+      HTTP_PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: f1
+      REDIS_ADDR: redis:6379
+      REDIS_DB: "0"
+      JWT_ISSUER: f1manager
+      JWT_AUDIENCE: f1manager
+      KEY_DIR: /keys
+      # must match the frontend's published origin so browser CORS passes
+      CORS_ORIGINS: "http://localhost:8081,http://127.0.0.1:8081"
+    volumes:
+      - jwtkeys:/keys
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      args:
+        # baked into the web bundle; must be reachable from the user's browser
+        API_HOST: localhost:8080
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  jwtkeys:
