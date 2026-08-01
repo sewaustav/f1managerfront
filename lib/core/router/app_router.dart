@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/season_state.dart';
 import '../api/auth_state.dart';
+import '../../features/season/application/season_state_provider.dart';
 import '../../features/lobby/application/lobby_controller.dart';
 import '../../features/lobby/presentation/lobby_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
@@ -36,9 +37,11 @@ String? redirectLogic({
   required bool hasGroup,
   required SeasonPhase? phase,
   required String location,
+  bool onAlwaysAvailableTab = false,
 }) {
   if (!authed) return location == '/auth' ? null : '/auth';
   if (!hasGroup) return location == '/lobby' ? null : '/lobby';
+  if (onAlwaysAvailableTab) return null; // never yank the user off a tab
   if (phase == null) return null;
   final target = routeForPhase(phase);
   return location == target ? null : target;
@@ -51,11 +54,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authed = ref.read(isAuthenticatedProvider);
       final hasGroup = ref.read(hasGroupProvider);
+      final phase = ref.read(seasonStateProvider).valueOrNull?.phase;
+      final loc = state.uri.path;
+      const tabs = {'/standings', '/info', '/my-team'};
       return redirectLogic(
         authed: authed,
         hasGroup: hasGroup,
-        phase: null, // wired by the Season plan (seasonStateProvider)
-        location: state.uri.path,
+        phase: phase,
+        location: loc,
+        onAlwaysAvailableTab: tabs.contains(loc),
       );
     },
     routes: [
@@ -89,5 +96,6 @@ class _AuthListenable extends ChangeNotifier {
   _AuthListenable(Ref ref) {
     ref.listen(isAuthenticatedProvider, (_, __) => notifyListeners());
     ref.listen(hasGroupProvider, (_, __) => notifyListeners());
+    ref.listen(seasonStateProvider, (_, __) => notifyListeners());
   }
 }
