@@ -10,12 +10,16 @@ class TransferList extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView.builder(
         itemCount: pilots.length,
-        itemBuilder: (_, i) => _TransferRow(pilot: pilots[i], onBuy: onBuy),
+        itemBuilder: (_, i) => _TransferRow(
+          key: ValueKey(pilots[i].id),
+          pilot: pilots[i],
+          onBuy: onBuy,
+        ),
       );
 }
 
 class _TransferRow extends StatefulWidget {
-  const _TransferRow({required this.pilot, required this.onBuy});
+  const _TransferRow({super.key, required this.pilot, required this.onBuy});
   final Pilot pilot;
   final void Function(Pilot pilot, int price) onBuy;
 
