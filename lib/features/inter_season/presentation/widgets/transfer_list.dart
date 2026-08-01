@@ -2,13 +2,23 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/pilot.dart';
 
 class TransferList extends StatelessWidget {
-  const TransferList({super.key, required this.pilots, required this.onBuy});
+  const TransferList({
+    super.key,
+    required this.pilots,
+    required this.onBuy,
+    this.shrinkWrap = false,
+    this.physics,
+  });
 
   final List<Pilot> pilots;
   final void Function(Pilot pilot, int price) onBuy;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
   @override
   Widget build(BuildContext context) => ListView.builder(
+        shrinkWrap: shrinkWrap,
+        physics: physics,
         itemCount: pilots.length,
         itemBuilder: (_, i) => _TransferRow(
           key: ValueKey(pilots[i].id),

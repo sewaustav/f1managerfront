@@ -10,6 +10,7 @@ import 'package:f1manager/core/ws/ws_providers.dart';
 import 'package:f1manager/core/ws/ws_service.dart';
 import 'package:f1manager/core/ws/ws_message.dart';
 import 'package:f1manager/features/draft/data/draft_repository.dart';
+import 'package:f1manager/features/draft/model/budget.dart';
 import 'package:f1manager/features/inter_season/data/inter_season_repository.dart';
 import 'package:f1manager/features/inter_season/model/my_team_summary.dart';
 import 'package:f1manager/features/inter_season/presentation/inter_season_screen.dart';
@@ -24,13 +25,20 @@ class _FakeWs extends WsService {
 class _FakeDraftRepo extends DraftRepository {
   _FakeDraftRepo() : super(Dio());
   @override
-  Future<List<Pilot>> getPilots() async => const [Pilot(id: 1, name: 'Free', team: null)];
+  Future<List<Pilot>> getPilots() async => const [
+        Pilot(id: 1, name: 'Free', team: null),
+        Pilot(id: 2, name: 'Owned', team: 3),
+      ];
   @override
   Future<List<Principal>> getPrincipals() async => const [Principal(id: 9, name: 'Toto')];
+  @override
+  Future<Budget> getBudget() async => const Budget(budget: 500, tokens: 3);
 }
 
 class _FakeRepo extends InterSeasonRepository {
   _FakeRepo() : super(Dio());
+  String? firedWho;
+  int? firedId;
   @override
   Future<MyTeamSummary> getMyTeam() async => const MyTeamSummary(
         id: 1,
@@ -39,6 +47,14 @@ class _FakeRepo extends InterSeasonRepository {
         team: Team(id: 3, name: 'RB'),
         principal: Principal(id: 9, name: 'Toto'),
       );
+  @override
+  Future<void> fire({required String who, required int id}) async {
+    firedWho = who;
+    firedId = id;
+  }
+
+  @override
+  Future<void> buyPilot({required int pilotId, required int price}) async {}
 }
 
 void main() {
@@ -57,6 +73,91 @@ void main() {
     expect(find.text('Principal'), findsOneWidget);
     expect(find.text('Base'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
+  });
+
+  testWidgets('Transfers tab shows roster, free pilot, owned pilot, and Fire buttons',
+      (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        wsServiceProvider.overrideWithValue(_FakeWs()),
+        draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+      ],
+      child: const MaterialApp(home: InterSeasonScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Max'), findsOneWidget);
+    expect(find.text('Lando'), findsOneWidget);
+    expect(find.text('Free'), findsOneWidget);
+    expect(find.text('Owned'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, 'Fire'), findsNWidgets(2));
+  });
+
+  testWidgets('tapping Fire on a roster pilot calls repo.fire and shows Pilot fired',
+      (tester) async {
+    final repo = _FakeRepo();
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        wsServiceProvider.overrideWithValue(_FakeWs()),
+        draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(repo),
+      ],
+      child: const MaterialApp(home: InterSeasonScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    final maxTile = find.byKey(const ValueKey(10));
+    final fireInMaxTile = find.descendant(of: maxTile, matching: find.text('Fire'));
+    await tester.tap(fireInMaxTile);
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.firedWho, 'pilot');
+    expect(repo.firedId, 10);
+    expect(find.text('Pilot fired'), findsOneWidget);
+  });
+
+  testWidgets('buying the free pilot shows Bought', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        wsServiceProvider.overrideWithValue(_FakeWs()),
+        draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+      ],
+      child: const MaterialApp(home: InterSeasonScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    final freeTile = find.ancestor(of: find.text('Free'), matching: find.byType(ListTile));
+    final buyButton = find.descendant(of: freeTile, matching: find.widgetWithText(FilledButton, 'Buy'));
+    await tester.tap(buyButton);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Bought'), findsOneWidget);
+  });
+
+  testWidgets('buying the owned pilot shows Offer sent', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        wsServiceProvider.overrideWithValue(_FakeWs()),
+        draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+      ],
+      child: const MaterialApp(home: InterSeasonScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    final ownedTile = find.ancestor(of: find.text('Owned'), matching: find.byType(ListTile));
+    final buyButton = find.descendant(of: ownedTile, matching: find.widgetWithText(FilledButton, 'Buy'));
+    await tester.tap(buyButton);
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Offer sent'), findsOneWidget);
   });
 
   testWidgets(

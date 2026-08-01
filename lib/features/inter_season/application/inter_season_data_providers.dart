@@ -12,13 +12,16 @@ final myTeamProvider = FutureProvider.autoDispose<MyTeamSummary>(
 final interSeasonBudgetProvider = FutureProvider.autoDispose<Budget>(
     (ref) => ref.watch(draftRepositoryProvider).getBudget());
 
+final allPilotsProvider = FutureProvider.autoDispose<List<Pilot>>(
+    (ref) => ref.watch(draftRepositoryProvider).getPilots());
+
 final freePilotsProvider = FutureProvider.autoDispose<List<Pilot>>((ref) async {
-  final pilots = await ref.watch(draftRepositoryProvider).getPilots();
+  final pilots = await ref.watch(allPilotsProvider.future);
   return pilots.where((p) => p.team == null).toList();
 });
 
 final ownedPilotsProvider = FutureProvider.autoDispose<List<Pilot>>((ref) async {
-  final pilots = await ref.watch(draftRepositoryProvider).getPilots();
+  final pilots = await ref.watch(allPilotsProvider.future);
   return pilots.where((p) => p.team != null).toList();
 });
 
