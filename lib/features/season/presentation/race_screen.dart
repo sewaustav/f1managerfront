@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
 import '../application/season_controller.dart';
+import '../application/season_state_provider.dart';
 import '../application/setup_math.dart';
 import '../data/season_repository.dart';
 import '../data/setup_preset_store.dart';
@@ -31,6 +32,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
   @override
   Widget build(BuildContext context) {
     final season = ref.watch(seasonControllerProvider);
+    final seasonState = ref.watch(seasonStateProvider).valueOrNull;
 
     ref.listen(seasonControllerProvider.select((s) => s.error), (_, err) {
       if (err != null) showErrorSnackbar(context, err);
@@ -48,11 +50,15 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
       );
     }
     if (season.waiting) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 12),
-          Text('Waiting for other players…'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 12),
+          const Text('Waiting for other players…'),
+          if (seasonState != null) ...[
+            const SizedBox(height: 8),
+            Text('${seasonState.submittedSetups.length} / ${seasonState.totalPlayers} submitted'),
+          ],
         ])),
       );
     }
@@ -82,11 +88,14 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
         onRetry: () => ref.invalidate(tracksProvider),
         data: (list) {
           if (list.isEmpty) return const Center(child: Text('No track data'));
-          final idx = _trackIndex.clamp(0, list.length - 1);
+          // Prefer the track for the current stage (server-driven); fall back
+          // to the manual picker only when season state is unavailable/stale.
+          final stageIdx = _stageTrackIndex(seasonState?.stage, list.length);
+          final idx = stageIdx ?? _trackIndex.clamp(0, list.length - 1);
           return Column(
             children: [
               TrackCard(list[idx]),
-              if (list.length > 1)
+              if (stageIdx == null && list.length > 1)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -145,6 +154,14 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
         floor: _values.floor, tyres: _values.tyres, reliability: _values.reliability,
         settingsAngle: _values.settingsAngle,
       );
+
+  /// Maps a 1-based season `stage` to a track list index (`tracks[stage-1]`).
+  /// Returns null when the stage is unknown/out of range, so callers fall
+  /// back to the manual picker (degraded mode).
+  int? _stageTrackIndex(int? stage, int trackCount) {
+    if (stage == null || stage < 1 || stage > trackCount) return null;
+    return stage - 1;
+  }
 
   bool _isUpdateStage(int stage) => stage == 3 || stage == 8 || stage == 13;
 

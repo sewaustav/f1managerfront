@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/auth_state.dart';
+import '../../features/season/application/season_state_provider.dart';
 import 'ws_channel_factory.dart';
 import 'ws_message.dart';
 import 'ws_service.dart';
@@ -11,6 +12,7 @@ final wsServiceProvider = Provider<WsService>((ref) {
     wsUrl: config.wsUrl,
     accessToken: store.readAccess,
     connect: (uri) => connectWithAuth(config.wsUrl, uri.queryParameters['token']),
+    onReconnect: () => ref.read(seasonStateProvider.notifier).refresh(),
   );
 });
 

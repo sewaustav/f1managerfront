@@ -1,13 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:f1manager/core/models/season_state.dart';
 import 'package:f1manager/core/ws/ws_message.dart';
 import 'package:f1manager/core/ws/ws_providers.dart';
 import 'package:f1manager/features/draft/model/budget.dart';
 import 'package:f1manager/features/season/data/season_repository.dart';
+import 'package:f1manager/features/season/data/season_state_repository.dart';
 import 'package:f1manager/features/season/data/setup_preset_store.dart';
+import 'package:f1manager/features/season/model/setup_payload.dart';
 import 'package:f1manager/features/season/model/setup_preset.dart';
 import 'package:f1manager/features/season/model/track_info.dart';
 import 'package:f1manager/features/season/presentation/race_screen.dart';
@@ -15,7 +19,17 @@ import 'package:f1manager/features/season/presentation/token_setup_screen.dart';
 
 class _MockRepo extends Mock implements SeasonRepository {}
 
+class _FakeSeasonStateRepo extends SeasonStateRepository {
+  _FakeSeasonStateRepo(this.value) : super(Dio());
+  final SeasonState value;
+  @override
+  Future<SeasonState> getSeasonState() async => value;
+}
+
 void main() {
+  setUpAll(() => registerFallbackValue(const SetupPayload(name: 'x')));
+
+
   testWidgets('renders track and a confirm-setup button', (tester) async {
     final repo = _MockRepo();
     when(() => repo.getTracks()).thenAnswer((_) async =>
@@ -105,5 +119,107 @@ void main() {
 
     expect(find.text('Preset exceeds the available 10 tokens'), findsOneWidget);
     expect(find.text('Tokens remaining: 10 / 10'), findsOneWidget);
+  });
+
+  testWidgets('selects the track for the current stage instead of the manual pick', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getTracks()).thenAnswer((_) async => const [
+          TrackInfo(id: 1, name: 'Monaco', type: 1),
+          TrackInfo(id: 2, name: 'Silverstone'),
+          TrackInfo(id: 3, name: 'Spa'),
+          TrackInfo(id: 4, name: 'Suzuka'),
+          TrackInfo(id: 5, name: 'Interlagos'),
+        ]);
+    when(() => repo.getBudget()).thenAnswer((_) async => const Budget(budget: 100, tokens: 35));
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        seasonRepositoryProvider.overrideWithValue(repo),
+        seasonStateRepositoryProvider.overrideWithValue(
+          _FakeSeasonStateRepo(const SeasonState(phase: SeasonPhase.racing, stage: 5)),
+        ),
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        tokenPoolProvider.overrideWith((ref) async => 35),
+        sharedPrefsProvider.overrideWithValue(prefs),
+      ],
+      child: const MaterialApp(home: RaceScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    // Stage 5 maps to the 5th track (1-based stage -> tracks[stage - 1]).
+    expect(find.text('Interlagos'), findsOneWidget);
+    expect(find.text('Monaco'), findsNothing);
+    // The manual picker is superseded once the season state resolves the track.
+    expect(find.byIcon(Icons.chevron_left), findsNothing);
+    expect(find.byIcon(Icons.chevron_right), findsNothing);
+  });
+
+  testWidgets('falls back to the manual track picker when season state is unavailable', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getTracks()).thenAnswer((_) async => const [
+          TrackInfo(id: 1, name: 'Monaco', type: 1),
+          TrackInfo(id: 2, name: 'Silverstone'),
+        ]);
+    when(() => repo.getBudget()).thenAnswer((_) async => const Budget(budget: 100, tokens: 35));
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        seasonRepositoryProvider.overrideWithValue(repo),
+        // seasonStateProvider left un-overridden: its repository call fails in
+        // the test sandbox (no server), so valueOrNull stays null — the
+        // degraded mode this test exercises.
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        tokenPoolProvider.overrideWith((ref) async => 35),
+        sharedPrefsProvider.overrideWithValue(prefs),
+      ],
+      child: const MaterialApp(home: RaceScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Monaco'), findsOneWidget);
+    expect(find.text('Track 1/2'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+  });
+
+  testWidgets('shows an N of M submitted waiting indicator', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getTracks()).thenAnswer((_) async =>
+        [const TrackInfo(id: 1, name: 'Monaco', difficulty: 80, rainPossibility: 40, tyre: 2, type: 1)]);
+    when(() => repo.getBudget()).thenAnswer((_) async => const Budget(budget: 100, tokens: 35));
+    when(() => repo.submitSetup(any())).thenAnswer((_) async {});
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        seasonRepositoryProvider.overrideWithValue(repo),
+        seasonStateRepositoryProvider.overrideWithValue(
+          _FakeSeasonStateRepo(const SeasonState(
+            phase: SeasonPhase.racing,
+            stage: 1,
+            submittedSetups: [1, 2],
+            totalPlayers: 4,
+          )),
+        ),
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        tokenPoolProvider.overrideWith((ref) async => 35),
+        sharedPrefsProvider.overrideWithValue(prefs),
+      ],
+      child: const MaterialApp(home: RaceScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('confirm_setup')));
+    await tester.pump();
+
+    expect(find.text('Waiting for other players…'), findsOneWidget);
+    expect(find.text('2 / 4 submitted'), findsOneWidget);
   });
 }
