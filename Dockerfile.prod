@@ -1,0 +1,14 @@
+# Production frontend image.
+#
+# Flutter web compiles to JS/wasm, not native machine code, so the build
+# architecture doesn't matter for the output — we build `flutter build web`
+# locally (fast, native toolchain) and this Dockerfile just ships the already
+# -built bundle behind nginx. Avoids running the (RAM-heavy) Flutter SDK build
+# on a resource-constrained server.
+#
+# Prerequisite: `flutter build web --release --dart-define=API_HOST=<host>` was
+# already run locally; `build/web` exists.
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY build/web /usr/share/nginx/html
+EXPOSE 80
