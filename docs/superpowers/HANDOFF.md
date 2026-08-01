@@ -1,7 +1,7 @@
 # HANDOFF — F1 Manager Flutter frontend
 
-Date: 2026-08-01. Branch: **`feat/frontend`** (HEAD `01c6722`, 70 commits above `main`).
-Status: **Plans 1–6 of 7 complete.** 131 tests green, `flutter analyze` clean, `flutter build web` passes.
+Date: 2026-08-01. Branch: **`feat/frontend`** (HEAD `9510e45`, 78 commits above `main`).
+Status: **ALL 7 plans complete.** 147 tests green, `flutter analyze` clean, `flutter build web` passes. Ready for `superpowers:finishing-a-development-branch` — branch NOT pushed/PR'd; confirm with owner.
 
 You are continuing a multi-plan build of the F1 Manager Flutter app (iOS/Android/Web) against an existing Go backend. Work proceeds as a **series of 7 plans**, each built with the **superpowers:subagent-driven-development** (SDD) workflow: write a plan → dispatch a fresh implementer subagent per task (TDD) → per-task review subagent → integrate → final whole-branch integration review → fix findings.
 
@@ -68,7 +68,11 @@ Plan: `plans/2026-07-31-05-inter-season.md`. Feature `lib/features/inter_season/
 ### Plan 6 — Standings + Info + My Team + shell nav + logout ✅ DONE
 Plan: `plans/2026-08-01-06-standings-info-myteam.md`. `features/standings/` (WDC/WCC from `/standing`, joined with pilot/team names), `features/info/` (Tracks/Squads/Pilots; `/players/squads` returns **`[]MyTeam`** not PlayerProfile → reuse `MyTeamSummary`), `features/my_team/` (team/pilots/principal/budget + Logout). Router restructured to **`StatefulShellRoute.indexedStack`** (`lib/core/router/app_shell.dart`, responsive NavigationBar/Rail): `/auth`+`/lobby` top-level; branches Play + Standings + Info + My-Team. Logout-state cleanup FIXED (resets `hasGroupProvider` + WS).
 
-### Plan 7 — Backend PRs + wiring (NEXT — final plan)
+### Plan 7 — season/state + WS ?token= + wiring ✅ DONE
+Plan: `plans/2026-08-01-07-season-state-wiring.md`. Backend **PR #6** (`GET /season/state` via in-memory `PhaseTracker`; WS `?token=` auth; base `feat/fire-ready-endpoints`). Frontend: `SeasonStateRepository`+`seasonStateProvider`, phase-driven router redirect (guarded off the always-available tabs), offstage-nav guard, next-track-by-stage + "N of M submitted" counter, and (final-review fix) live season-state refresh on phase WS events + 5s poll gated on session. Backend deferred: `inter_season` phase not emitted (no final-stage trigger; `PhaseInterSeason` ready); `RoundState` empty right after a round closes.
+
+<!-- original Plan 7 heading retained below for detail -->
+### Plan 7 detail — Backend PRs + wiring
 `GET /season/state` backend PR (the big one — unifies phase across draft/setup/inter-season; see spec §7 for the response shape), WS `?token=` query auth (Web WS). Then wire the router `phase` redirect, next-track-by-stage, the "N of M submitted" waiting counter, and render enum ints as labels. **Two carry-overs from Plan 6's final review that Plan 7 MUST handle:** (a) the shell/tabs are currently **unreachable** in the running app (lobby has no manual link in; nothing navigates into a shell route) — wiring `seasonStateProvider → routeForPhase → a shell route` fixes this; (b) the `StatefulShellRoute.indexedStack` keeps **offstage game screens (Draft/InterSeason) mounted**, and their `ref.listen(wsMessages) → context.go('/token-setup'|...)` will hijack navigation away from Standings/Info/My-Team when a WS phase event fires — guard those screen-level `context.go` transitions (and the phase redirect) on the user actually being in the Play branch (`navigationShell.currentIndex`/current route), not just on `redirectLogic`.
 
 ## 7. Immediate next step
