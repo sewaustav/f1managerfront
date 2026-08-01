@@ -10,6 +10,10 @@ import '../../features/draft/presentation/draft_screen.dart';
 import '../../features/season/presentation/token_setup_screen.dart';
 import '../../features/season/presentation/race_screen.dart';
 import '../../features/inter_season/presentation/inter_season_screen.dart';
+import 'app_shell.dart';
+import '../../features/standings/presentation/standings_screen.dart';
+import '../../features/info/presentation/info_screen.dart';
+import '../../features/my_team/presentation/my_team_screen.dart';
 
 String routeForPhase(SeasonPhase phase) {
   switch (phase) {
@@ -57,10 +61,26 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
       GoRoute(path: '/lobby', builder: (_, __) => const LobbyScreen()),
-      GoRoute(path: '/draft', builder: (_, __) => const DraftScreen()),
-      GoRoute(path: '/token-setup', builder: (_, __) => const TokenSetupScreen()),
-      GoRoute(path: '/season', builder: (_, __) => const RaceScreen()),
-      GoRoute(path: '/inter-season', builder: (_, __) => const InterSeasonScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => AppShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/draft', builder: (_, __) => const DraftScreen()),
+            GoRoute(path: '/token-setup', builder: (_, __) => const TokenSetupScreen()),
+            GoRoute(path: '/season', builder: (_, __) => const RaceScreen()),
+            GoRoute(path: '/inter-season', builder: (_, __) => const InterSeasonScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/standings', builder: (_, __) => const StandingsScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/info', builder: (_, __) => const InfoScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/my-team', builder: (_, __) => const MyTeamScreen()),
+          ]),
+        ],
+      ),
     ],
   );
 });
