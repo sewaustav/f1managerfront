@@ -44,7 +44,6 @@ void main() {
       draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
       seasonRepositoryProvider.overrideWithValue(_FakeSeasonRepo()),
     ]);
-    addTearDown(container.dispose);
     final router = container.read(routerProvider);
     router.go('/standings');
     await tester.pumpWidget(UncontrolledProviderScope(
@@ -54,5 +53,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Standings'), findsWidgets);
     expect(find.text('WDC'), findsOneWidget);
+    // Dispose synchronously, before the test body returns: seasonStateProvider
+    // now holds a Timer.periodic (5s poll), and flutter_test's pending-timer
+    // invariant check runs before addTearDown callbacks would fire, so an
+    // UncontrolledProviderScope's externally-owned container must be torn
+    // down here rather than via addTearDown.
+    container.dispose();
   });
 }

@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:f1manager/core/api/auth_state.dart';
 import 'package:f1manager/core/models/season_state.dart';
 import 'package:f1manager/core/ws/ws_message.dart';
 import 'package:f1manager/core/ws/ws_providers.dart';
 import 'package:f1manager/features/draft/model/budget.dart';
+import 'package:f1manager/features/lobby/application/lobby_controller.dart';
 import 'package:f1manager/features/season/data/season_repository.dart';
 import 'package:f1manager/features/season/data/season_state_repository.dart';
 import 'package:f1manager/features/season/data/setup_preset_store.dart';
@@ -137,6 +139,8 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        isAuthenticatedProvider.overrideWith((ref) => true),
+        hasGroupProvider.overrideWith((ref) => true),
         seasonRepositoryProvider.overrideWithValue(repo),
         seasonStateRepositoryProvider.overrideWithValue(
           _FakeSeasonStateRepo(const SeasonState(phase: SeasonPhase.racing, stage: 5)),
@@ -171,8 +175,9 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         seasonRepositoryProvider.overrideWithValue(repo),
-        // seasonStateProvider left un-overridden: its repository call fails in
-        // the test sandbox (no server), so valueOrNull stays null — the
+        // isAuthenticatedProvider/hasGroupProvider left at their defaults
+        // (false): seasonStateProvider's session gate short-circuits to
+        // SeasonPhase.unknown/stage 0 without hitting the repo, which is the
         // degraded mode this test exercises.
         wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
         tokenPoolProvider.overrideWith((ref) async => 35),
@@ -199,6 +204,8 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        isAuthenticatedProvider.overrideWith((ref) => true),
+        hasGroupProvider.overrideWith((ref) => true),
         seasonRepositoryProvider.overrideWithValue(repo),
         seasonStateRepositoryProvider.overrideWithValue(
           _FakeSeasonStateRepo(const SeasonState(

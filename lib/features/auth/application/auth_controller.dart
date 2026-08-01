@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/auth_state.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../lobby/application/lobby_controller.dart';
+import '../../season/application/season_state_provider.dart';
 import '../data/auth_repository.dart';
 import '../model/auth_requests.dart';
 
@@ -49,6 +50,7 @@ class AuthController extends AutoDisposeAsyncNotifier<void> {
     // Tear down the live WS so the next session starts clean.
     ref.invalidate(wsMessagesProvider);
     ref.invalidate(wsServiceProvider);
+    ref.invalidate(seasonStateProvider);
   }
 }
 

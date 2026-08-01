@@ -4,7 +4,9 @@ import 'package:f1manager/core/api/auth_state.dart';
 import 'package:f1manager/core/models/season_state.dart';
 import 'package:f1manager/core/storage/token_store.dart';
 import 'package:f1manager/core/ws/ws_channel_factory.dart';
+import 'package:f1manager/core/ws/ws_message.dart';
 import 'package:f1manager/core/ws/ws_providers.dart';
+import 'package:f1manager/features/lobby/application/lobby_controller.dart';
 import 'package:f1manager/features/season/application/season_state_provider.dart';
 import 'package:f1manager/features/season/data/season_state_repository.dart';
 import 'package:dio/dio.dart';
@@ -48,6 +50,12 @@ void main() {
     final container = ProviderContainer(overrides: [
       tokenStoreProvider.overrideWithValue(_FakeTokenStore()),
       seasonStateRepositoryProvider.overrideWithValue(repo),
+      isAuthenticatedProvider.overrideWith((ref) => true),
+      hasGroupProvider.overrideWith((ref) => true),
+      // seasonStateProvider's build() now listens to wsMessagesProvider;
+      // override it so building the controller doesn't spin up a real
+      // WsService.start() (which would attempt a live socket connection).
+      wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
     ]);
     addTearDown(container.dispose);
 
