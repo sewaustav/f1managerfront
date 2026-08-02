@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:f1manager/core/api/auth_state.dart';
 import 'package:f1manager/features/lobby/application/lobby_controller.dart';
 import 'package:f1manager/features/lobby/data/lobby_repository.dart';
 import 'package:f1manager/features/lobby/model/group_requests.dart';
@@ -52,12 +51,10 @@ void main() {
     expect(find.byKey(const Key('copy_group_id_button')), findsOneWidget);
   });
 
-  // "End the game early" was previously impossible (only logout, which never
-  // touches server state). The button is organizer-only: a group's id is
-  // deterministically its creator's own userID, so it only shows when the
-  // current user's id matches the group id.
-
-  testWidgets('organizer sees the end-game-early button', (tester) async {
+  // "End game early" moved to the My Team screen (test/features/my_team/) —
+  // the lobby isn't reachable anymore once the draft has started, which is
+  // exactly when a player would want to end the game.
+  testWidgets('lobby no longer shows an end-game-early button', (tester) async {
     final repo = _MockRepo();
     when(() => repo.getPlayers()).thenAnswer((_) async => const []);
 
@@ -66,81 +63,11 @@ void main() {
         lobbyRepositoryProvider.overrideWithValue(repo),
         hasGroupProvider.overrideWith((ref) => true),
         myGroupIdProvider.overrideWith((ref) => 42),
-        currentUserIdProvider.overrideWith((ref) => 42),
-      ],
-      child: const MaterialApp(home: LobbyScreen()),
-    ));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('end_game_early_button')), findsOneWidget);
-  });
-
-  testWidgets('non-organizer (joined another group) does not see the button', (tester) async {
-    final repo = _MockRepo();
-    when(() => repo.getPlayers()).thenAnswer((_) async => const []);
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        lobbyRepositoryProvider.overrideWithValue(repo),
-        hasGroupProvider.overrideWith((ref) => true),
-        myGroupIdProvider.overrideWith((ref) => 7), // joined someone else's group
-        currentUserIdProvider.overrideWith((ref) => 42),
       ],
       child: const MaterialApp(home: LobbyScreen()),
     ));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('end_game_early_button')), findsNothing);
-  });
-
-  testWidgets('confirming the dialog calls repo.resetGroup', (tester) async {
-    final repo = _MockRepo();
-    when(() => repo.getPlayers()).thenAnswer((_) async => const []);
-    when(() => repo.resetGroup()).thenAnswer((_) async {});
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        lobbyRepositoryProvider.overrideWithValue(repo),
-        hasGroupProvider.overrideWith((ref) => true),
-        myGroupIdProvider.overrideWith((ref) => 42),
-        currentUserIdProvider.overrideWith((ref) => 42),
-      ],
-      child: const MaterialApp(home: LobbyScreen()),
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('end_game_early_button')));
-    await tester.pumpAndSettle();
-    // a confirmation dialog must appear before anything destructive happens
-    verifyNever(() => repo.resetGroup());
-    expect(find.byType(AlertDialog), findsOneWidget);
-
-    await tester.tap(find.text('End game'));
-    await tester.pumpAndSettle();
-
-    verify(() => repo.resetGroup()).called(1);
-  });
-
-  testWidgets('dismissing the dialog does not call repo.resetGroup', (tester) async {
-    final repo = _MockRepo();
-    when(() => repo.getPlayers()).thenAnswer((_) async => const []);
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        lobbyRepositoryProvider.overrideWithValue(repo),
-        hasGroupProvider.overrideWith((ref) => true),
-        myGroupIdProvider.overrideWith((ref) => 42),
-        currentUserIdProvider.overrideWith((ref) => 42),
-      ],
-      child: const MaterialApp(home: LobbyScreen()),
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('end_game_early_button')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-
-    verifyNever(() => repo.resetGroup());
   });
 }
