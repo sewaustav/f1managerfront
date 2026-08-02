@@ -35,4 +35,32 @@ void main() {
     expect(find.text('Pilots'), findsOneWidget);
     expect(find.text('Monza'), findsOneWidget);
   });
+
+  // A player mid-draft has no team yet — the backend now returns a
+  // zero-value team/principal instead of erroring the whole squads list, so
+  // the UI must show a friendly placeholder for that player's row.
+  testWidgets('squads tab shows a placeholder for a player with no team yet', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        tracksProvider.overrideWith((ref) async => const []),
+        squadsProvider.overrideWith((ref) async => const [
+              MyTeamSummary(
+                id: 2,
+                pilot1: Pilot(id: 0, name: ''),
+                pilot2: Pilot(id: 0, name: ''),
+                team: Team(id: 0, name: ''),
+                principal: Principal(id: 0, name: ''),
+              )
+            ]),
+        allPilotsInfoProvider.overrideWith((ref) async => const []),
+      ],
+      child: const MaterialApp(home: InfoScreen()),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Squads'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No team picked yet'), findsOneWidget);
+    expect(find.text('no principal yet'), findsOneWidget);
+  });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:f1manager/core/api/auth_state.dart';
 import 'package:f1manager/core/ws/ws_message.dart';
 import 'package:f1manager/core/ws/ws_providers.dart';
 import 'package:f1manager/features/draft/application/draft_controller.dart';
@@ -29,14 +30,16 @@ void main() {
     final container = ProviderContainer(overrides: [
       draftRepositoryProvider.overrideWithValue(repo),
       wsMessagesProvider.overrideWith((ref) => ctrl.stream),
+      currentUserIdProvider.overrideWith((ref) => 9),
     ]);
     addTearDown(container.dispose);
     container.listen(draftControllerProvider, (_, __) {});
 
-    ctrl.add(WsMessage.parse('{"type":"draft_turn","round":1}'));
+    ctrl.add(WsMessage.parse('{"type":"draft_turn","round":1,"user_id":9}'));
     await Future<void>.delayed(Duration.zero);
     expect(container.read(draftControllerProvider).isMyTurn, isTrue);
     expect(container.read(draftControllerProvider).round, 1);
+    expect(container.read(draftControllerProvider).currentUserId, 9);
 
     ctrl.add(WsMessage.parse('{"type":"draft_pick_made","user_id":9,"pick":0,"item_id":3}'));
     await Future<void>.delayed(Duration.zero);
@@ -44,6 +47,24 @@ void main() {
     expect(st.isMyTurn, isFalse);
     expect(st.history.length, 1);
     expect(st.history.single.itemId, 3);
+  });
+
+  test('draft_turn for another player sets currentUserId without claiming my turn', () async {
+    final ctrl = StreamController<WsMessage>.broadcast();
+    addTearDown(ctrl.close);
+    final container = ProviderContainer(overrides: [
+      draftRepositoryProvider.overrideWithValue(_repoWithInactiveState()),
+      wsMessagesProvider.overrideWith((ref) => ctrl.stream),
+      currentUserIdProvider.overrideWith((ref) => 9),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(draftControllerProvider, (_, __) {});
+
+    ctrl.add(WsMessage.parse('{"type":"draft_turn","round":0,"user_id":42}'));
+    await Future<void>.delayed(Duration.zero);
+    final st = container.read(draftControllerProvider);
+    expect(st.isMyTurn, isFalse);
+    expect(st.currentUserId, 42);
   });
 
   test('draft_finished sets finished', () async {
@@ -129,5 +150,35 @@ void main() {
     await container.read(draftControllerProvider.notifier).refreshTurnState();
 
     expect(container.read(draftControllerProvider).isMyTurn, isTrue);
+  });
+
+  // A stale isMyTurn=true (from an earlier WS message) must not survive once
+  // the server says the draft is gone (cancelled via "end game early", or
+  // simply never started) — active=false, finished=false is the "gone"
+  // state, and it used to be silently ignored, leaving clients stuck showing
+  // "Your pick" and getting confusing rejected picks forever.
+  test('refreshTurnState clears a stale isMyTurn when the draft is gone', () async {
+    final ctrl = StreamController<WsMessage>.broadcast();
+    addTearDown(ctrl.close);
+    final repo = _MockRepo();
+    when(() => repo.getDraftState()).thenAnswer((_) async => _inactive);
+    final container = ProviderContainer(overrides: [
+      draftRepositoryProvider.overrideWithValue(repo),
+      wsMessagesProvider.overrideWith((ref) => ctrl.stream),
+      currentUserIdProvider.overrideWith((ref) => 9),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(draftControllerProvider, (_, __) {});
+    await Future<void>.delayed(Duration.zero);
+
+    ctrl.add(WsMessage.parse('{"type":"draft_turn","round":0,"user_id":9}'));
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(draftControllerProvider).isMyTurn, isTrue);
+
+    await container.read(draftControllerProvider.notifier).refreshTurnState();
+
+    final st = container.read(draftControllerProvider);
+    expect(st.isMyTurn, isFalse);
+    expect(st.currentUserId, isNull);
   });
 }

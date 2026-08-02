@@ -4,9 +4,10 @@ import 'package:f1manager/features/draft/model/draft_events.dart';
 
 void main() {
   test('parses draft_turn', () {
-    final e = draftEventFromMessage(WsMessage.parse('{"type":"draft_turn","round":2}'));
+    final e = draftEventFromMessage(WsMessage.parse('{"type":"draft_turn","round":2,"user_id":5}'));
     expect(e, isA<DraftTurn>());
     expect((e as DraftTurn).round, 2);
+    expect(e.userId, 5);
   });
 
   test('parses draft_pick_made', () {

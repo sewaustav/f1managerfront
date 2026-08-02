@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ws/ws_providers.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../data/inter_season_repository.dart';
 import '../model/transfer_events.dart';
 
@@ -67,7 +68,7 @@ class InterSeasonController extends AutoDisposeNotifier<InterSeasonState> {
       await ref.read(interSeasonRepositoryProvider).markReady();
       state = state.copyWith(ready: true, busy: false);
     } catch (e) {
-      state = state.copyWith(busy: false, error: e.toString());
+      state = state.copyWith(busy: false, error: errorMessage(e));
     }
   }
 

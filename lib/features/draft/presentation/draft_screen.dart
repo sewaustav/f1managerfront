@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/nav_guard.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
+import '../../lobby/application/lobby_controller.dart' show playersProvider;
+import '../../lobby/model/player.dart';
 import '../application/draft_controller.dart';
 import '../application/draft_data_providers.dart';
 import 'widgets/budget_bar.dart';
@@ -16,6 +18,7 @@ class DraftScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final draft = ref.watch(draftControllerProvider);
+    final players = ref.watch(playersProvider).valueOrNull ?? const <Player>[];
 
     ref.listen(draftControllerProvider.select((s) => s.lastError), (_, err) {
       if (err != null) {
@@ -28,6 +31,20 @@ class DraftScreen extends ConsumerWidget {
     });
 
     final canPick = draft.isMyTurn && !draft.submitting;
+
+    final takenTeamIds = players.map((p) => p.team).where((t) => t != 0).toSet();
+    final takenPrincipalIds = players.map((p) => p.teamPrincipal).whereType<int>().toSet();
+
+    String turnTitle() {
+      if (draft.isMyTurn) return 'Your pick (round ${draft.round + 1})';
+      final currentId = draft.currentUserId;
+      if (currentId != null) {
+        for (final p in players) {
+          if (p.id == currentId) return '${p.name} is picking (round ${draft.round + 1})';
+        }
+      }
+      return 'Waiting for other players';
+    }
 
     Future<void> pickPilot(int id) async {
       await ref.read(draftControllerProvider.notifier).submitPick(pick: 0, itemId: id);
@@ -43,7 +60,7 @@ class DraftScreen extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(draft.isMyTurn ? 'Your pick (round ${draft.round + 1})' : 'Waiting for other players'),
+          title: Text(turnTitle()),
           actions: [
             IconButton(
               key: const Key('refresh_turn_button'),
@@ -64,7 +81,7 @@ class DraftScreen extends ConsumerWidget {
                     value: ref.watch(pilotsProvider),
                     onRetry: () => ref.invalidate(pilotsProvider),
                     data: (pilots) => DraftItemList(
-                      items: pilots,
+                      items: pilots.where((p) => p.team == null).toList(),
                       title: (p) => p.name,
                       subtitle: (p) => 'Rating ${p.rating} • ${p.price - p.sponsors}M',
                       searchText: (p) => p.name,
@@ -76,7 +93,7 @@ class DraftScreen extends ConsumerWidget {
                     value: ref.watch(teamsProvider),
                     onRetry: () => ref.invalidate(teamsProvider),
                     data: (teams) => DraftItemList(
-                      items: teams,
+                      items: teams.where((t) => !takenTeamIds.contains(t.id)).toList(),
                       title: (t) => t.name,
                       subtitle: (t) => 'Budget ${t.budget}M',
                       searchText: (t) => t.name,
@@ -98,7 +115,7 @@ class DraftScreen extends ConsumerWidget {
                     value: ref.watch(principalsProvider),
                     onRetry: () => ref.invalidate(principalsProvider),
                     data: (principals) => DraftItemList(
-                      items: principals,
+                      items: principals.where((p) => !takenPrincipalIds.contains(p.id)).toList(),
                       title: (p) => p.name,
                       subtitle: (p) => 'Level ${p.level} • ${p.price}M',
                       searchText: (p) => p.name,

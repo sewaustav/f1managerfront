@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ws/ws_providers.dart';
+import '../../../shared/widgets/error_snackbar.dart';
 import '../data/season_repository.dart';
 import '../model/race_result.dart';
 import '../model/setup_payload.dart';
@@ -55,7 +56,7 @@ class SeasonController extends AutoDisposeNotifier<SeasonState> {
       final result = await ref.read(seasonRepositoryProvider).getRaceResult();
       state = state.copyWith(result: result, waiting: false, error: null);
     } catch (e) {
-      state = state.copyWith(error: e.toString(), waiting: false);
+      state = state.copyWith(error: errorMessage(e), waiting: false);
     }
   }
 
@@ -64,7 +65,7 @@ class SeasonController extends AutoDisposeNotifier<SeasonState> {
     try {
       await ref.read(seasonRepositoryProvider).submitSetup(payload);
     } catch (e) {
-      state = state.copyWith(error: e.toString(), waiting: false, submitted: false);
+      state = state.copyWith(error: errorMessage(e), waiting: false, submitted: false);
     }
   }
 

@@ -5,8 +5,9 @@ sealed class DraftEvent {
 }
 
 class DraftTurn extends DraftEvent {
-  const DraftTurn(this.round);
+  const DraftTurn(this.round, this.userId);
   final int round;
+  final int userId;
 }
 
 class DraftRetry extends DraftEvent {
@@ -31,7 +32,7 @@ int _int(Object? v) => v is int ? v : (v is num ? v.toInt() : 0);
 DraftEvent? draftEventFromMessage(WsMessage m) {
   switch (m.type) {
     case 'draft_turn':
-      return DraftTurn(_int(m.data['round']));
+      return DraftTurn(_int(m.data['round']), _int(m.data['user_id']));
     case 'draft_retry':
       return DraftRetry(_int(m.data['round']), (m.data['error'] ?? '').toString());
     case 'draft_pick_made':

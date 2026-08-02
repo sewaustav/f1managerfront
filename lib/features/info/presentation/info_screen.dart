@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
+import '../../inter_season/model/my_team_summary.dart';
 import '../application/info_providers.dart';
+
+String _squadSubtitle(MyTeamSummary s) {
+  final pilots = [s.pilot1, s.pilot2].where((p) => p.id != 0).map((p) => p.name).join(' / ');
+  final principal = s.principal.id == 0 ? 'no principal yet' : s.principal.name;
+  return pilots.isEmpty ? principal : '$pilots · $principal';
+}
 
 class InfoScreen extends ConsumerWidget {
   const InfoScreen({super.key});
@@ -32,8 +39,8 @@ class InfoScreen extends ConsumerWidget {
             data: (squads) => ListView(children: [
               for (final s in squads)
                 ListTile(
-                  title: Text(s.team.name),
-                  subtitle: Text('${s.pilot1.name} / ${s.pilot2.name} · ${s.principal.name}'),
+                  title: Text(s.team.id == 0 ? 'No team picked yet' : s.team.name),
+                  subtitle: Text(_squadSubtitle(s)),
                 ),
             ]),
           ),

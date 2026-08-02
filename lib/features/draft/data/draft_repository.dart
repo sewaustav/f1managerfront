@@ -17,18 +17,21 @@ class DraftTurnState {
     required this.round,
     required this.isMyTurn,
     required this.finished,
+    this.currentUserId = 0,
   });
 
   final bool active;
   final int round;
   final bool isMyTurn;
   final bool finished;
+  final int currentUserId;
 
   factory DraftTurnState.fromJson(Map<String, dynamic> json) => DraftTurnState(
         active: json['active'] as bool? ?? false,
         round: (json['round'] as num?)?.toInt() ?? 0,
         isMyTurn: json['is_my_turn'] as bool? ?? false,
         finished: json['finished'] as bool? ?? false,
+        currentUserId: (json['current_user_id'] as num?)?.toInt() ?? 0,
       );
 }
 
