@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
+import '../../../core/api/auth_state.dart';
 import '../../../core/ws/ws_providers.dart';
+import '../../season/application/season_state_provider.dart';
 import '../application/lobby_controller.dart';
 import '../model/player.dart';
 
@@ -94,7 +96,35 @@ class _GroupLobby extends ConsumerWidget {
     ref.watch(wsMessagesProvider);
     final players = ref.watch(playersProvider);
     final groupId = ref.watch(myGroupIdProvider);
+    final myId = ref.watch(currentUserIdProvider);
+    final isOrganizer = groupId != null && myId != null && myId == groupId;
     final ctrl = ref.read(lobbyControllerProvider.notifier);
+
+    Future<void> confirmAndReset() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('End the game early?'),
+          content: const Text(
+              'This wipes everyone\'s draft picks, teams, and budget back to a fresh lobby. '
+              'This cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: const Text('End game'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await ctrl.resetGroup();
+      ref.invalidate(seasonStateProvider);
+      ref.invalidate(playersProvider);
+    }
 
     return Column(
       children: [
@@ -136,10 +166,22 @@ class _GroupLobby extends ConsumerWidget {
         ),
         Padding(
           padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            key: const Key('start_draft_button'),
-            onPressed: () => ctrl.startDraft(),
-            child: const Text('Start draft'),
+          child: Column(
+            children: [
+              FilledButton(
+                key: const Key('start_draft_button'),
+                onPressed: () => ctrl.startDraft(),
+                child: const Text('Start draft'),
+              ),
+              if (isOrganizer) ...[
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('end_game_early_button'),
+                  onPressed: confirmAndReset,
+                  child: const Text('End game early'),
+                ),
+              ],
+            ],
           ),
         ),
       ],
