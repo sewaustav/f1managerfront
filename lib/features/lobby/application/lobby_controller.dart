@@ -49,6 +49,15 @@ class LobbyController extends AutoDisposeAsyncNotifier<void> {
     state = await AsyncValue.guard(
         () => ref.read(lobbyRepositoryProvider).startDraft());
   }
+
+  /// "End the game early" — wipes the group's gameplay data back to a fresh
+  /// pre-draft lobby. Does NOT change group membership: hasGroupProvider
+  /// stays true, the player remains in the lobby.
+  Future<void> resetGroup() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+        () => ref.read(lobbyRepositoryProvider).resetGroup());
+  }
 }
 
 final lobbyControllerProvider =

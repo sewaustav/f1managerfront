@@ -7,6 +7,31 @@ import '../../../core/models/principal.dart';
 import '../model/engine.dart';
 import '../model/budget.dart';
 
+/// Recovers "whose turn is it" — see GET /draft/state. draft_turn is
+/// otherwise a single, targeted, one-shot WS message that is silently
+/// dropped if the recipient's socket wasn't connected at that exact instant,
+/// which would otherwise deadlock the whole draft with no way to recover.
+class DraftTurnState {
+  const DraftTurnState({
+    required this.active,
+    required this.round,
+    required this.isMyTurn,
+    required this.finished,
+  });
+
+  final bool active;
+  final int round;
+  final bool isMyTurn;
+  final bool finished;
+
+  factory DraftTurnState.fromJson(Map<String, dynamic> json) => DraftTurnState(
+        active: json['active'] as bool? ?? false,
+        round: (json['round'] as num?)?.toInt() ?? 0,
+        isMyTurn: json['is_my_turn'] as bool? ?? false,
+        finished: json['finished'] as bool? ?? false,
+      );
+}
+
 class DraftRepository {
   DraftRepository(this._dio);
   final Dio _dio;
@@ -30,6 +55,11 @@ class DraftRepository {
     final data = <String, dynamic>{'pick': pick, 'item_id': itemId};
     if (engine != null) data['engine'] = engine;
     return _dio.post('/draft/pick', data: data);
+  }
+
+  Future<DraftTurnState> getDraftState() async {
+    final res = await _dio.get('/draft/state');
+    return DraftTurnState.fromJson((res.data as Map).cast<String, dynamic>());
   }
 
   Future<void> swapBots({

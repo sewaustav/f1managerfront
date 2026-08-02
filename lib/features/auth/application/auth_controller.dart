@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/auth_state.dart';
+import '../../../core/api/jwt_decode.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../lobby/application/lobby_controller.dart';
 import '../../season/application/season_state_provider.dart';
@@ -21,6 +22,7 @@ class AuthController extends AutoDisposeAsyncNotifier<void> {
             refresh: pair.refreshToken,
           );
       ref.read(isAuthenticatedProvider.notifier).state = true;
+      ref.read(currentUserIdProvider.notifier).state = userIdFromJwt(pair.accessToken);
     });
   }
 
@@ -35,6 +37,7 @@ class AuthController extends AutoDisposeAsyncNotifier<void> {
             refresh: pair.refreshToken,
           );
       ref.read(isAuthenticatedProvider.notifier).state = true;
+      ref.read(currentUserIdProvider.notifier).state = userIdFromJwt(pair.accessToken);
     });
   }
 
@@ -46,7 +49,9 @@ class AuthController extends AutoDisposeAsyncNotifier<void> {
     }
     await ref.read(tokenStoreProvider).clear();
     ref.read(isAuthenticatedProvider.notifier).state = false;
+    ref.read(currentUserIdProvider.notifier).state = null;
     ref.read(hasGroupProvider.notifier).state = false;
+    ref.read(myGroupIdProvider.notifier).state = null;
     // Tear down the live WS so the next session starts clean.
     ref.invalidate(wsMessagesProvider);
     ref.invalidate(wsServiceProvider);

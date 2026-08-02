@@ -18,6 +18,11 @@ class LobbyRepository {
   }
 
   Future<void> startDraft() => _dio.post('/draft/start');
+
+  /// Wipes the caller's group back to a fresh pre-draft lobby — "end the
+  /// game early". Organizer-only server-side (a group's id is
+  /// deterministically its creator's own userID).
+  Future<void> resetGroup() => _dio.post('/groups/reset');
 }
 
 final lobbyRepositoryProvider =

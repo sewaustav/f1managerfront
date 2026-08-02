@@ -40,8 +40,6 @@ class DraftState {
   static const _sentinel = Object();
 }
 
-final currentUserIdProvider = StateProvider<int?>((ref) => null);
-
 class DraftController extends AutoDisposeNotifier<DraftState> {
   @override
   DraftState build() {
@@ -51,7 +49,26 @@ class DraftController extends AutoDisposeNotifier<DraftState> {
       final event = draftEventFromMessage(msg);
       if (event != null) _apply(event);
     });
+    // Best-effort recovery of a missed draft_turn WS message (see
+    // GET /draft/state): draft_turn is a single, targeted, one-shot message
+    // that is silently dropped if this client's WS wasn't connected at that
+    // exact instant, otherwise deadlocking the whole draft forever. A
+    // failure here just leaves the UI relying on WS as before.
+    refreshTurnState();
     return const DraftState();
+  }
+
+  Future<void> refreshTurnState() async {
+    try {
+      final st = await ref.read(draftRepositoryProvider).getDraftState();
+      if (st.finished) {
+        state = state.copyWith(finished: true, isMyTurn: false);
+      } else if (st.active) {
+        state = state.copyWith(isMyTurn: st.isMyTurn, round: st.round);
+      }
+    } catch (_) {
+      // best-effort; the WS path remains the primary source of truth
+    }
   }
 
   void _apply(DraftEvent event) {

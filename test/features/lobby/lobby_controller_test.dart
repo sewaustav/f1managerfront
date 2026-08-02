@@ -72,4 +72,35 @@ void main() {
     expect(container.read(lobbyControllerProvider).hasError, isTrue);
     expect(container.read(myGroupIdProvider), isNull);
   });
+
+  test('resetGroup calls the repo and stays in the group (hasGroup untouched)',
+      () async {
+    final repo = _MockRepo();
+    when(() => repo.resetGroup()).thenAnswer((_) async {});
+    final container = ProviderContainer(
+        overrides: [lobbyRepositoryProvider.overrideWithValue(repo)]);
+    addTearDown(container.dispose);
+    container.listen(lobbyControllerProvider, (_, __) {});
+    container.read(hasGroupProvider.notifier).state = true;
+
+    await container.read(lobbyControllerProvider.notifier).resetGroup();
+
+    verify(() => repo.resetGroup()).called(1);
+    expect(container.read(lobbyControllerProvider).hasError, isFalse);
+    expect(container.read(hasGroupProvider), isTrue,
+        reason: 'reset wipes gameplay data, not group membership');
+  });
+
+  test('resetGroup surfaces a failure', () async {
+    final repo = _MockRepo();
+    when(() => repo.resetGroup()).thenThrow(Exception('not the organizer'));
+    final container = ProviderContainer(
+        overrides: [lobbyRepositoryProvider.overrideWithValue(repo)]);
+    addTearDown(container.dispose);
+    container.listen(lobbyControllerProvider, (_, __) {});
+
+    await container.read(lobbyControllerProvider.notifier).resetGroup();
+
+    expect(container.read(lobbyControllerProvider).hasError, isTrue);
+  });
 }

@@ -41,4 +41,18 @@ void main() {
         data: {'pick': 0, 'item_id': 3});
     await repo.pick(pick: 0, itemId: 3);
   });
+
+  test('getDraftState parses active/round/is_my_turn/finished', () async {
+    adapter.onGet('/draft/state', (s) => s.reply(200, {
+          'active': true,
+          'round': 2,
+          'is_my_turn': true,
+          'finished': false,
+        }));
+    final st = await repo.getDraftState();
+    expect(st.active, isTrue);
+    expect(st.round, 2);
+    expect(st.isMyTurn, isTrue);
+    expect(st.finished, isFalse);
+  });
 }

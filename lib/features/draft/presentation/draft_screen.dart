@@ -44,6 +44,14 @@ class DraftScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(draft.isMyTurn ? 'Your pick (round ${draft.round + 1})' : 'Waiting for other players'),
+          actions: [
+            IconButton(
+              key: const Key('refresh_turn_button'),
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh turn status',
+              onPressed: () => ref.read(draftControllerProvider.notifier).refreshTurnState(),
+            ),
+          ],
           bottom: const TabBar(tabs: [Tab(text: 'Pilots'), Tab(text: 'Teams'), Tab(text: 'Principals')]),
         ),
         body: Column(

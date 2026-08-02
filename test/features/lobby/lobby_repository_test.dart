@@ -39,4 +39,9 @@ void main() {
     expect(players.single.budget, 110);
     expect(players.single.tokens, 35);
   });
+
+  test('resetGroup posts to /groups/reset', () async {
+    adapter.onPost('/groups/reset', (s) => s.reply(200, ''));
+    await repo.resetGroup();
+  });
 }
