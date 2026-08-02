@@ -157,6 +157,34 @@ void main() {
   // simply never started) — active=false, finished=false is the "gone"
   // state, and it used to be silently ignored, leaving clients stuck showing
   // "Your pick" and getting confusing rejected picks forever.
+  // A successful pick used to leave `submitting` true forever if the
+  // confirming draft_pick_made WS broadcast was dropped — every Pick button
+  // stayed disabled even though the title correctly said "Your pick" again
+  // (isMyTurn came back true via the next draft_turn). The HTTP 200 from
+  // pick() is itself sufficient confirmation; nothing should wait on WS.
+  test('submitPick resolves submitting/isMyTurn on its own 200, not via WS', () async {
+    final repo = _MockRepo();
+    when(() => repo.getDraftState()).thenAnswer((_) async => _inactive);
+    when(() => repo.pick(
+          pick: any(named: 'pick'),
+          itemId: any(named: 'itemId'),
+          engine: any(named: 'engine'),
+        )).thenAnswer((_) async {});
+    final container = ProviderContainer(overrides: [
+      draftRepositoryProvider.overrideWithValue(repo),
+      wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(draftControllerProvider, (_, __) {});
+    await Future<void>.delayed(Duration.zero);
+
+    await container.read(draftControllerProvider.notifier).submitPick(pick: 0, itemId: 1);
+
+    final st = container.read(draftControllerProvider);
+    expect(st.submitting, isFalse);
+    expect(st.isMyTurn, isFalse);
+  });
+
   test('refreshTurnState clears a stale isMyTurn when the draft is gone', () async {
     final ctrl = StreamController<WsMessage>.broadcast();
     addTearDown(ctrl.close);

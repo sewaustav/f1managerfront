@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/auth_state.dart';
 import '../../../core/ws/ws_providers.dart';
@@ -52,7 +54,16 @@ class DraftState {
   static const _sentinel = Object();
 }
 
+/// How often the draft screen polls the server as a fallback while WS
+/// messages are missed. WS delivery has repeatedly proven unreliable here
+/// (single-shot targeted messages dropped on reconnect/backgrounding), so
+/// polling — not WS — is the thing players can actually depend on; WS is
+/// just a latency optimization on top of it.
+const draftPollInterval = Duration(seconds: 3);
+
 class DraftController extends AutoDisposeNotifier<DraftState> {
+  Timer? _pollTimer;
+
   @override
   DraftState build() {
     ref.listen(wsMessagesProvider, (_, next) {
@@ -67,23 +78,51 @@ class DraftController extends AutoDisposeNotifier<DraftState> {
     // exact instant, otherwise deadlocking the whole draft forever. A
     // failure here just leaves the UI relying on WS as before.
     refreshTurnState();
+    _pollTimer = Timer.periodic(draftPollInterval, (_) => _poll());
+    ref.onDispose(() {
+      _pollTimer?.cancel();
+    });
     return const DraftState();
+  }
+
+  Future<void> _poll() async {
+    if (state.finished) return;
+    await refreshTurnState();
+    _invalidatePickLists();
+  }
+
+  void _invalidatePickLists() {
+    ref.invalidate(pilotsProvider);
+    ref.invalidate(teamsProvider);
+    ref.invalidate(principalsProvider);
+    ref.invalidate(playersProvider);
   }
 
   Future<void> refreshTurnState() async {
     try {
       final st = await ref.read(draftRepositoryProvider).getDraftState();
+      // Always clear `submitting` here: it exists only to disable the Pick
+      // buttons while a request is in flight, and this fetch is itself a
+      // fresh, authoritative read of the server's current state — there is
+      // nothing left to wait for. Without this, a pick whose confirming
+      // draft_pick_made broadcast got dropped left every button disabled
+      // forever, even though the title correctly said "Your pick" again.
       if (st.finished) {
-        state = state.copyWith(finished: true, isMyTurn: false, currentUserId: null);
+        state = state.copyWith(
+            finished: true, isMyTurn: false, currentUserId: null, submitting: false);
       } else if (st.active) {
-        state = state.copyWith(isMyTurn: st.isMyTurn, round: st.round, currentUserId: st.currentUserId);
+        state = state.copyWith(
+            isMyTurn: st.isMyTurn,
+            round: st.round,
+            currentUserId: st.currentUserId,
+            submitting: false);
       } else {
         // No active draft and not finished either (never started, or
         // cancelled via "end game early"): clear any turn state a client
         // may have been holding onto from before — otherwise a stale
         // isMyTurn=true from an earlier WS message survives forever, since
         // there's no other signal to correct it once the draft is gone.
-        state = state.copyWith(isMyTurn: false, currentUserId: null);
+        state = state.copyWith(isMyTurn: false, currentUserId: null, submitting: false);
       }
     } catch (_) {
       // best-effort; the WS path remains the primary source of truth
@@ -112,10 +151,7 @@ class DraftController extends AutoDisposeNotifier<DraftState> {
         // broadcasts to the whole group, not just the picker) — refetch so
         // it drops out of the pick lists instead of lingering as a stale,
         // already-taken option that fails with a confusing error on click.
-        ref.invalidate(pilotsProvider);
-        ref.invalidate(teamsProvider);
-        ref.invalidate(principalsProvider);
-        ref.invalidate(playersProvider);
+        _invalidatePickLists();
       case DraftFinished():
         state = state.copyWith(finished: true, isMyTurn: false, currentUserId: null);
     }
@@ -125,7 +161,12 @@ class DraftController extends AutoDisposeNotifier<DraftState> {
     state = state.copyWith(submitting: true, lastError: null);
     try {
       await ref.read(draftRepositoryProvider).pick(pick: pick, itemId: itemId, engine: engine);
-      // success/turn advance arrives via WS broadcast; keep submitting until then.
+      // A 200 here already means the pick was applied and the turn moved on
+      // (or the draft finished) — resolve our own state immediately instead
+      // of waiting on the draft_pick_made broadcast, which used to leave
+      // every Pick button disabled forever if that one message got dropped.
+      state = state.copyWith(submitting: false, isMyTurn: false);
+      _invalidatePickLists();
     } catch (e) {
       state = state.copyWith(submitting: false, lastError: errorMessage(e));
     }
