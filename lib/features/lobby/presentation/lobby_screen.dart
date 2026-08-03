@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
-import '../../../core/api/auth_state.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../season/application/season_state_provider.dart';
 import '../application/lobby_controller.dart';
@@ -96,35 +95,7 @@ class _GroupLobby extends ConsumerWidget {
     ref.watch(wsMessagesProvider);
     final players = ref.watch(playersProvider);
     final groupId = ref.watch(myGroupIdProvider);
-    final myId = ref.watch(currentUserIdProvider);
-    final isOrganizer = groupId != null && myId != null && myId == groupId;
     final ctrl = ref.read(lobbyControllerProvider.notifier);
-
-    Future<void> confirmAndReset() async {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogCtx) => AlertDialog(
-          title: const Text('Завершить игру досрочно?'),
-          content: const Text(
-              'Все выборы драфта, команды и бюджеты сбросятся до пустого лобби. '
-              'Отменить это будет нельзя.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('Отмена'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('Завершить'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-      await ctrl.resetGroup();
-      ref.invalidate(seasonStateProvider);
-      ref.invalidate(playersProvider);
-    }
 
     Future<void> confirmAndLeave() async {
       final confirmed = await showDialog<bool>(
@@ -216,18 +187,13 @@ class _GroupLobby extends ConsumerWidget {
                 child: const Text('Начать драфт'),
               ),
               const SizedBox(height: 8),
-              if (isOrganizer)
-                OutlinedButton(
-                  key: const Key('end_game_early_button'),
-                  onPressed: confirmAndReset,
-                  child: const Text('Завершить игру'),
-                )
-              else
-                OutlinedButton(
-                  key: const Key('leave_group_button'),
-                  onPressed: confirmAndLeave,
-                  child: const Text('Выйти из группы'),
-                ),
+              // Завершение игры живёт на экране команды: в лобби оно лишнее,
+              // а вот выйти из группы нужно уметь всем, включая организатора.
+              OutlinedButton(
+                key: const Key('leave_group_button'),
+                onPressed: confirmAndLeave,
+                child: const Text('Выйти из группы'),
+              ),
             ],
           ),
         ),
