@@ -61,6 +61,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Пресет не влезает в доступные 10 токенов'), findsOneWidget);
-    expect(find.text('Tokens remaining: 10 / 10'), findsOneWidget);
+    expect(find.text('Осталось токенов: 10 из 10'), findsOneWidget);
   });
 }

@@ -18,7 +18,7 @@ List<int> allowedEngineChoices(Team team, List<Engine> engines) {
   }
 }
 
-String engineLabel(int ice) => ice == kIceSelf ? 'Self / default' : 'Engine #$ice';
+String engineLabel(int ice) => ice == kIceSelf ? 'Свой / по умолчанию' : 'Мотор №$ice';
 
 /// Maps a chosen engine value to the `engine` argument for `POST /draft/pick`.
 /// The backend's `resolveEngine` only takes the Client self/default path when
@@ -57,7 +57,7 @@ Future<int?> showEngineModal(
             key: Key('engine_$ice'),
             onPressed: () => Navigator.pop(ctx, ice),
             child: Text(ice == kIceSelf
-                ? 'Self / default'
+                ? 'Свой / по умолчанию'
                 : '${engineLabel(ice)}  (${priceOf[ice] ?? '?'})'),
           ),
       ],

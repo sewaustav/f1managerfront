@@ -83,7 +83,7 @@ class DraftScreen extends ConsumerWidget {
                     data: (pilots) => DraftItemList(
                       items: pilots.where((p) => p.team == null).toList(),
                       title: (p) => p.name,
-                      subtitle: (p) => 'Rating ${p.rating} • ${p.price - p.sponsors}M',
+                      subtitle: (p) => 'Рейтинг ${p.rating} • ${p.price - p.sponsors}М',
                       searchText: (p) => p.name,
                       enabled: canPick,
                       onPick: (p) => pickPilot(p.id),
@@ -95,7 +95,7 @@ class DraftScreen extends ConsumerWidget {
                     data: (teams) => DraftItemList(
                       items: teams.where((t) => !takenTeamIds.contains(t.id)).toList(),
                       title: (t) => t.name,
-                      subtitle: (t) => 'Budget ${t.budget}M',
+                      subtitle: (t) => 'Бюджет ${t.budget}М',
                       searchText: (t) => t.name,
                       enabled: canPick,
                       onPick: (t) async {
@@ -117,7 +117,7 @@ class DraftScreen extends ConsumerWidget {
                     data: (principals) => DraftItemList(
                       items: principals.where((p) => !takenPrincipalIds.contains(p.id)).toList(),
                       title: (p) => p.name,
-                      subtitle: (p) => 'Level ${p.level} • ${p.price}M',
+                      subtitle: (p) => 'Уровень ${p.level} • ${p.price}М',
                       searchText: (p) => p.name,
                       enabled: canPick,
                       onPick: (p) => pickPrincipal(p.id),
