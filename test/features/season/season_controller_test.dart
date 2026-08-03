@@ -91,6 +91,38 @@ void main() {
     expect(st.result, isNull);
   });
 
+  // If the screen cannot supply the stage, polling must still happen —
+  // "no stage" used to mean "no polling", i.e. waiting forever on a dropped
+  // race_finished. We fall back to "anything newer than the last result".
+  test('an unknown stage still polls, using the last result as the baseline', () async {
+    final repo = _MockRepo();
+    when(() => repo.submitSetup(any())).thenAnswer((_) async {});
+    // last recorded race is stage 2, so our race must be stage 3+
+    var current = const RaceResultResponse(stage: 2, results: [RaceResult(pilotName: 'Old')]);
+    when(() => repo.getRaceResult()).thenAnswer((_) async => current);
+
+    final container = ProviderContainer(overrides: [
+      seasonRepositoryProvider.overrideWithValue(repo),
+      wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(seasonControllerProvider, (_, __) {});
+
+    final notifier = container.read(seasonControllerProvider.notifier);
+    await notifier.submitSetup(_payload); // no stage available
+
+    await notifier.pollForResult();
+    expect(container.read(seasonControllerProvider).waiting, isTrue,
+        reason: 'stage 2 is the result that already existed before we raced');
+
+    current = const RaceResultResponse(stage: 3, results: [RaceResult(pilotName: 'Fresh')]);
+    await notifier.pollForResult();
+
+    final st = container.read(seasonControllerProvider);
+    expect(st.waiting, isFalse);
+    expect(st.result?.results.single.pilotName, 'Fresh');
+  });
+
   test('race_finished error sets error message', () async {
     final ctrl = StreamController<WsMessage>.broadcast();
     addTearDown(ctrl.close);

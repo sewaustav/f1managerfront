@@ -78,13 +78,26 @@ class SeasonController extends AutoDisposeNotifier<SeasonState> {
   }
 
   Future<void> submitSetup(SetupPayload payload, {int? stage}) async {
-    _awaitingStage = stage;
     state = state.copyWith(submitted: true, waiting: true, error: null);
     try {
       await ref.read(seasonRepositoryProvider).submitSetup(payload);
-      if (stage != null) _startPolling();
+      _awaitingStage = stage ?? await _stageAfterLastResult();
+      if (_awaitingStage != null) _startPolling();
     } catch (e) {
       state = state.copyWith(error: errorMessage(e), waiting: false, submitted: false);
+    }
+  }
+
+  /// Fallback for when the screen could not tell us which stage we are
+  /// racing: anything newer than the result already on record is ours.
+  /// Without it an unknown stage meant no polling at all — and a dropped
+  /// race_finished then left the player waiting forever.
+  Future<int?> _stageAfterLastResult() async {
+    try {
+      final last = await ref.read(seasonRepositoryProvider).getRaceResult();
+      return last.stage + 1;
+    } catch (_) {
+      return null;
     }
   }
 
