@@ -55,13 +55,13 @@ class _TransferRowState extends State<_TransferRow> {
           child: TextField(
             controller: _price,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Price'),
+            decoration: const InputDecoration(labelText: 'Цена'),
           ),
         ),
         trailing: FilledButton(
           onPressed: () =>
               widget.onBuy(widget.pilot, int.tryParse(_price.text) ?? widget.pilot.price),
-          child: const Text('Buy'),
+          child: const Text('Купить'),
         ),
       );
 }

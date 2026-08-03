@@ -17,7 +17,7 @@ void main() {
     ));
     // sliders render with prefilled values
     expect(find.byType(Slider), findsNWidgets(4));
-    await tester.tap(find.text('Submit'));
+    await tester.tap(find.text('Отправить'));
     await tester.pump();
     expect(submitted, {'base': 6, 'engineer': 3, 'tube': 2, 'sim': 4});
   });

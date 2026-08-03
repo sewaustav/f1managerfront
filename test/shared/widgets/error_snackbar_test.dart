@@ -13,7 +13,7 @@ void main() {
       requestOptions: RequestOptions(path: '/x'),
       type: DioExceptionType.connectionError,
     );
-    expect(errorMessage(e), 'Cannot reach server');
+    expect(errorMessage(e), 'Нет связи с сервером');
   });
 
   test('errorMessage falls back to toString for unknown', () {

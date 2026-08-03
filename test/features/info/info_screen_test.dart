@@ -30,9 +30,9 @@ void main() {
       child: const MaterialApp(home: InfoScreen()),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Tracks'), findsOneWidget);
-    expect(find.text('Squads'), findsOneWidget);
-    expect(find.text('Pilots'), findsOneWidget);
+    expect(find.text('Трассы'), findsOneWidget);
+    expect(find.text('Составы'), findsOneWidget);
+    expect(find.text('Пилоты'), findsOneWidget);
     expect(find.text('Monza'), findsOneWidget);
   });
 
@@ -57,10 +57,10 @@ void main() {
       child: const MaterialApp(home: InfoScreen()),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Squads'));
+    await tester.tap(find.text('Составы'));
     await tester.pumpAndSettle();
 
-    expect(find.text('No team picked yet'), findsOneWidget);
-    expect(find.text('no principal yet'), findsOneWidget);
+    expect(find.text('Команда ещё не выбрана'), findsOneWidget);
+    expect(find.text('руководитель не выбран'), findsOneWidget);
   });
 }

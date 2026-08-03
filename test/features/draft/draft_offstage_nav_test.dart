@@ -96,7 +96,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DraftScreen), findsOneWidget);
 
-    await tester.tap(find.text('Standings'));
+    await tester.tap(find.text('Зачёт'));
     await tester.pumpAndSettle();
 
     // DraftScreen is mounted offstage (IndexedStack keeps every branch

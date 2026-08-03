@@ -119,7 +119,7 @@ void main() {
     await tester.tap(find.text('Too big'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Preset exceeds the available 10 tokens'), findsOneWidget);
+    expect(find.text('Пресет не влезает в доступные 10 токенов'), findsOneWidget);
     expect(find.text('Tokens remaining: 10 / 10'), findsOneWidget);
   });
 
@@ -188,7 +188,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Monaco'), findsOneWidget);
-    expect(find.text('Track 1/2'), findsOneWidget);
+    expect(find.text('Трасса 1 из 2'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right), findsOneWidget);
   });
 
@@ -226,7 +226,7 @@ void main() {
     await tester.tap(find.byKey(const Key('confirm_setup')));
     await tester.pump();
 
-    expect(find.text('Waiting for other players…'), findsOneWidget);
-    expect(find.text('2 / 4 submitted'), findsOneWidget);
+    expect(find.text('Ожидаем других игроков…'), findsOneWidget);
+    expect(find.text('Отправили: 2 из 4'), findsOneWidget);
   });
 }

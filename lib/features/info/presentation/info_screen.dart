@@ -6,7 +6,7 @@ import '../application/info_providers.dart';
 
 String _squadSubtitle(MyTeamSummary s) {
   final pilots = [s.pilot1, s.pilot2].where((p) => p.id != 0).map((p) => p.name).join(' / ');
-  final principal = s.principal.id == 0 ? 'no principal yet' : s.principal.name;
+  final principal = s.principal.id == 0 ? 'руководитель не выбран' : s.principal.name;
   return pilots.isEmpty ? principal : '$pilots · $principal';
 }
 
@@ -19,9 +19,9 @@ class InfoScreen extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Info'),
+          title: const Text('Справка'),
           bottom: const TabBar(
-              tabs: [Tab(text: 'Tracks'), Tab(text: 'Squads'), Tab(text: 'Pilots')]),
+              tabs: [Tab(text: 'Трассы'), Tab(text: 'Составы'), Tab(text: 'Пилоты')]),
         ),
         body: TabBarView(children: [
           AsyncValueView(
@@ -30,7 +30,7 @@ class InfoScreen extends ConsumerWidget {
               for (final t in tracks)
                 ListTile(
                   title: Text(t.name),
-                  subtitle: Text('type ${t.type} · difficulty ${t.difficulty} · rain ${t.rainPossibility}%'),
+                  subtitle: Text('тип ${t.type} · сложность ${t.difficulty} · дождь ${t.rainPossibility}%'),
                 ),
             ]),
           ),
@@ -39,7 +39,7 @@ class InfoScreen extends ConsumerWidget {
             data: (squads) => ListView(children: [
               for (final s in squads)
                 ListTile(
-                  title: Text(s.team.id == 0 ? 'No team picked yet' : s.team.name),
+                  title: Text(s.team.id == 0 ? 'Команда ещё не выбрана' : s.team.name),
                   subtitle: Text(_squadSubtitle(s)),
                 ),
             ]),

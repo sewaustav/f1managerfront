@@ -46,14 +46,14 @@ void main() {
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
 
-    expect(find.text('Play'), findsOneWidget);
-    expect(find.text('Standings'), findsOneWidget);
-    expect(find.text('Info'), findsOneWidget);
-    expect(find.text('My Team'), findsOneWidget);
+    expect(find.text('Игра'), findsOneWidget);
+    expect(find.text('Зачёт'), findsOneWidget);
+    expect(find.text('Справка'), findsOneWidget);
+    expect(find.text('Команда'), findsOneWidget);
 
     expect(find.text('PLAY'), findsOneWidget);
 
-    await tester.tap(find.text('Standings'));
+    await tester.tap(find.text('Зачёт'));
     await tester.pumpAndSettle();
     expect(find.text('STAND'), findsOneWidget);
   });
@@ -76,9 +76,9 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
 
     expect(find.text('PLAY'), findsOneWidget);
-    expect(find.text('Standings'), findsWidgets); // nav label
+    expect(find.text('Зачёт'), findsWidgets); // nav label
 
-    await tester.tap(find.text('Standings').last);
+    await tester.tap(find.text('Зачёт').last);
     await tester.pumpAndSettle();
     expect(find.text('STAND'), findsOneWidget);
   });

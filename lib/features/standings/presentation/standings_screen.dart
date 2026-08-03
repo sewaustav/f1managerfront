@@ -21,8 +21,8 @@ class StandingsScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Standings'),
-          bottom: const TabBar(tabs: [Tab(text: 'WDC'), Tab(text: 'WCC')]),
+          title: const Text('Зачёт'),
+          bottom: const TabBar(tabs: [Tab(text: 'Личный зачёт'), Tab(text: 'Кубок конструкторов')]),
         ),
         body: TabBarView(children: [
           AsyncValueView(value: ref.watch(driverStandingsProvider), data: _list),

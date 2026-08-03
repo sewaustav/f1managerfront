@@ -14,14 +14,14 @@ Future<void> showUpdateWindow(
       final coast = TextEditingController(text: '0');
       return StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: Text('Car update — stage $stage'),
+          title: Text('Улучшение болида — этап $stage'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               SegmentedButton<int>(
                 segments: const [
-                  ButtonSegment(value: 0, label: Text('Improve car')),
-                  ButtonSegment(value: 1, label: Text('Synergy')),
+                  ButtonSegment(value: 0, label: Text('Улучшить болид')),
+                  ButtonSegment(value: 1, label: Text('Синергия')),
                 ],
                 selected: {type},
                 onSelectionChanged: (s) => setState(() => type = s.first),
@@ -38,7 +38,7 @@ Future<void> showUpdateWindow(
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Skip')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Пропустить')),
             FilledButton(
               key: const Key('confirm_update'),
               onPressed: () {
@@ -46,7 +46,7 @@ Future<void> showUpdateWindow(
                 onSubmit(type, type == 0 ? amount.clamp(0, 15) : (amount < 0 ? 0 : amount));
                 Navigator.pop(ctx);
               },
-              child: const Text('Apply'),
+              child: const Text('Применить'),
             ),
           ],
         ),

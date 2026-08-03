@@ -15,8 +15,8 @@ void main() {
       child: const MaterialApp(home: StandingsScreen()),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('WDC'), findsOneWidget);
-    expect(find.text('WCC'), findsOneWidget);
+    expect(find.text('Личный зачёт'), findsOneWidget);
+    expect(find.text('Кубок конструкторов'), findsOneWidget);
     expect(find.textContaining('Lando'), findsOneWidget);
     expect(find.textContaining('25'), findsOneWidget);
   });

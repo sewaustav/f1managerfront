@@ -18,7 +18,7 @@ void main() {
         ),
       ),
     ));
-    await tester.tap(find.text('Buy'));
+    await tester.tap(find.text('Купить'));
     await tester.pump();
     expect(bought!.id, 5);
     expect(price, 33);
@@ -40,7 +40,7 @@ void main() {
       ),
     ));
     await tester.enterText(find.byType(TextField), 'not a number');
-    await tester.tap(find.text('Buy'));
+    await tester.tap(find.text('Купить'));
     await tester.pump();
     expect(bought!.id, 5);
     expect(price, 33);
@@ -62,7 +62,7 @@ void main() {
       ),
     ));
     await tester.enterText(find.byType(TextField), '99');
-    await tester.tap(find.text('Buy'));
+    await tester.tap(find.text('Купить'));
     await tester.pump();
     expect(bought!.id, 5);
     expect(price, 99);

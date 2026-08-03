@@ -23,18 +23,18 @@ class MyTeamScreen extends ConsumerWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogCtx) => AlertDialog(
-          title: const Text('End the game early?'),
+          title: const Text('Завершить игру досрочно?'),
           content: const Text(
-              'This wipes everyone\'s draft picks, teams, and budget back to a fresh lobby. '
-              'This cannot be undone.'),
+              'Все выборы драфта, команды и бюджеты сбросятся до пустого лобби. '
+              'Отменить это будет нельзя.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Отмена'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('End game'),
+              child: const Text('Завершить'),
             ),
           ],
         ),
@@ -50,18 +50,18 @@ class MyTeamScreen extends ConsumerWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogCtx) => AlertDialog(
-          title: const Text('Leave the group?'),
+          title: const Text('Выйти из группы?'),
           content: const Text(
-              'Your pilots go back into the pool and any transfer offers you '
-              'have open are withdrawn. You can rejoin with the group ID.'),
+              'Ваши пилоты вернутся в общий пул, а открытые предложения по трансферам '
+              'будут отозваны. Вернуться можно по ID группы.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Отмена'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('Leave'),
+              child: const Text('Выйти'),
             ),
           ],
         ),
@@ -73,25 +73,25 @@ class MyTeamScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Team'),
+        title: const Text('Моя команда'),
         actions: [
           if (isOrganizer)
             IconButton(
               key: const Key('end_game_early_button'),
               icon: const Icon(Icons.stop_circle_outlined),
-              tooltip: 'End game early',
+              tooltip: 'Завершить игру',
               onPressed: confirmAndReset,
             )
           else if (groupId != null)
             IconButton(
               key: const Key('leave_group_button'),
               icon: const Icon(Icons.exit_to_app),
-              tooltip: 'Leave group',
+              tooltip: 'Выйти из группы',
               onPressed: confirmAndLeave,
             ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: 'Выйти из аккаунта',
             onPressed: () => ref.read(authControllerProvider.notifier).logout(),
           ),
         ],
@@ -101,16 +101,16 @@ class MyTeamScreen extends ConsumerWidget {
         data: (t) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(t.team.id == 0 ? 'No team picked yet' : t.team.name,
+            Text(t.team.id == 0 ? 'Команда ещё не выбрана' : t.team.name,
                 style: Theme.of(context).textTheme.headlineSmall),
             if (t.team.id != 0) ...[
               const SizedBox(height: 8),
-              Text('Car level ${t.team.carLevel} · Base ${t.team.baseLevel} · '
-                  'Engineer ${t.team.engineer} · Sim ${t.team.simLevel} · Tube ${t.team.tubeLevel}'),
+              Text('Болид ${t.team.carLevel} · База ${t.team.baseLevel} · '
+                  'Инженеры ${t.team.engineer} · Симулятор ${t.team.simLevel} · Труба ${t.team.tubeLevel}'),
             ],
             const Divider(height: 24),
             if (t.pilot1.id == 0 && t.pilot2.id == 0)
-              const ListTile(title: Text('No pilots picked yet'))
+              const ListTile(title: Text('Пилоты ещё не выбраны'))
             else ...[
               if (t.pilot1.id != 0)
                 ListTile(
@@ -126,13 +126,13 @@ class MyTeamScreen extends ConsumerWidget {
             const Divider(height: 24),
             ListTile(
               title: Text(t.principal.id == 0
-                  ? 'No principal picked yet'
-                  : 'Principal: ${t.principal.name}'),
-              trailing: t.principal.id == 0 ? null : Text('Level ${t.principal.level}'),
+                  ? 'Руководитель ещё не выбран'
+                  : 'Руководитель: ${t.principal.name}'),
+              trailing: t.principal.id == 0 ? null : Text('Уровень ${t.principal.level}'),
             ),
             const Divider(height: 24),
             budget.when(
-              data: (b) => Text('Budget ${b.budget} · Tokens ${b.tokens}'),
+              data: (b) => Text('Бюджет ${b.budget} · Токены ${b.tokens}'),
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),

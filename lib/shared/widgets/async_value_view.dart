@@ -21,7 +21,7 @@ class AsyncValueView<T> extends StatelessWidget {
             if (onRetry != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: FilledButton(onPressed: onRetry, child: const Text('Retry')),
+                child: FilledButton(onPressed: onRetry, child: const Text('Повторить')),
               ),
           ],
         ),

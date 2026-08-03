@@ -41,7 +41,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
     return Scaffold(
       appBar: AppBar(
         title: const Text('F1 Manager'),
-        bottom: TabBar(controller: _tabs, tabs: const [Tab(text: 'Login'), Tab(text: 'Register')]),
+        bottom: TabBar(controller: _tabs, tabs: const [Tab(text: 'Вход'), Tab(text: 'Регистрация')]),
       ),
       body: TabBarView(
         controller: _tabs,
@@ -70,15 +70,15 @@ class _LoginForm extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           TextField(key: const Key('login_field'), controller: login,
-              decoration: const InputDecoration(labelText: 'Email or username')),
+              decoration: const InputDecoration(labelText: 'Почта или имя')),
           const SizedBox(height: 12),
           TextField(key: const Key('password_field'), controller: password, obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password')),
+              decoration: const InputDecoration(labelText: 'Пароль')),
           const SizedBox(height: 24),
           FilledButton(
             key: const Key('sign_in_button'),
             onPressed: loading ? null : onSubmit,
-            child: loading ? const _Spinner() : const Text('Sign in'),
+            child: loading ? const _Spinner() : const Text('Войти'),
           ),
         ],
       );
@@ -96,18 +96,18 @@ class _RegisterForm extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: [
           TextField(key: const Key('email_field'), controller: email,
-              decoration: const InputDecoration(labelText: 'Email')),
+              decoration: const InputDecoration(labelText: 'Почта')),
           const SizedBox(height: 12),
           TextField(key: const Key('username_field'), controller: username,
-              decoration: const InputDecoration(labelText: 'Username')),
+              decoration: const InputDecoration(labelText: 'Имя')),
           const SizedBox(height: 12),
           TextField(key: const Key('reg_password_field'), controller: password, obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password (min 8)')),
+              decoration: const InputDecoration(labelText: 'Пароль (минимум 8)')),
           const SizedBox(height: 24),
           FilledButton(
             key: const Key('register_button'),
             onPressed: loading ? null : onSubmit,
-            child: loading ? const _Spinner() : const Text('Register'),
+            child: loading ? const _Spinner() : const Text('Зарегистрироваться'),
           ),
         ],
       );

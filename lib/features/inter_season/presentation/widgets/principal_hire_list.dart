@@ -21,10 +21,10 @@ class PrincipalHireList extends StatelessWidget {
           for (final p in principals)
             ListTile(
               title: Text(p.name),
-              subtitle: Text('Level ${p.level} · ${p.price}'),
+              subtitle: Text('Уровень ${p.level} · ${p.price}'),
               trailing: p.id == currentPrincipalId
-                  ? OutlinedButton(onPressed: () => onFire(p), child: const Text('Fire'))
-                  : FilledButton(onPressed: () => onHire(p), child: const Text('Hire')),
+                  ? OutlinedButton(onPressed: () => onFire(p), child: const Text('Уволить'))
+                  : FilledButton(onPressed: () => onHire(p), child: const Text('Нанять')),
             ),
         ],
       );

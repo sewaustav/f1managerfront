@@ -13,17 +13,34 @@ AppException mapDioError(DioException e) {
     case DioExceptionType.connectionTimeout:
     case DioExceptionType.sendTimeout:
     case DioExceptionType.receiveTimeout:
-      return const AppException('Request timeout');
+      return const AppException('Сервер не отвечает');
     case DioExceptionType.connectionError:
-      return const AppException('Cannot reach server');
+      return const AppException('Нет связи с сервером');
     case DioExceptionType.badResponse:
       final data = e.response?.data;
       final code = e.response?.statusCode;
+      // Текст ошибки с бэкенда уже на русском — показываем его как есть.
       if (data is Map && data['error'] is String) {
         return AppException(data['error'] as String, statusCode: code);
       }
-      return AppException('Request failed ($code)', statusCode: code);
+      return AppException(_statusMessage(code), statusCode: code);
     default:
-      return AppException(e.message ?? 'Network error');
+      return const AppException('Ошибка сети');
+  }
+}
+
+String _statusMessage(int? code) {
+  switch (code) {
+    case 401:
+    case 403:
+      return 'Нужно войти заново';
+    case 409:
+      return 'Сейчас не ваш ход';
+    case 404:
+      return 'Не найдено';
+    case 500:
+      return 'Ошибка на сервере';
+    default:
+      return 'Запрос не прошёл${code == null ? '' : ' ($code)'}';
   }
 }

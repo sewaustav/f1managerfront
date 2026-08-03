@@ -81,7 +81,7 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Inter-Season'),
+          title: const Text('Межсезонье'),
           actions: [
             Consumer(builder: (_, r, __) {
               final budget = r.watch(interSeasonBudgetProvider).valueOrNull;
@@ -95,10 +95,10 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
             }),
           ],
           bottom: const TabBar(tabs: [
-            Tab(text: 'Transfers'),
-            Tab(text: 'Principal'),
-            Tab(text: 'Base'),
-            Tab(text: 'Ready'),
+            Tab(text: 'Трансферы'),
+            Tab(text: 'Руководитель'),
+            Tab(text: 'База'),
+            Tab(text: 'Готовность'),
           ]),
         ),
         body: TabBarView(
@@ -136,16 +136,16 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                     }),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text('My pilots', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text('Мои пилоты', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     MyPilotsList(
                       pilots: [t.pilot1, t.pilot2],
                       onFire: (p) =>
-                          _act(() => repo.fire(who: 'pilot', id: p.id), 'Pilot fired'),
+                          _act(() => repo.fire(who: 'pilot', id: p.id), 'Пилот уволен'),
                     ),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text('Free agents', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text('Свободные агенты', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     AsyncValueView(
                       value: free,
@@ -154,12 +154,12 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         onBuy: (p, price) =>
-                            _act(() => repo.buyPilot(pilotId: p.id, price: price), 'Bought'),
+                            _act(() => repo.buyPilot(pilotId: p.id, price: price), 'Куплено'),
                       ),
                     ),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text("Other players' pilots",
+                      child: Text('Пилоты других игроков',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     AsyncValueView(
@@ -188,8 +188,8 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                     principals: list,
                     currentPrincipalId: t.principal.id,
                     onHire: (p) => _act(
-                        () => repo.hirePrincipal(principalId: p.id, price: p.price), 'Hired'),
-                    onFire: (p) => _act(() => repo.fire(who: 'principal', id: p.id), 'Fired'),
+                        () => repo.hirePrincipal(principalId: p.id, price: p.price), 'Нанят'),
+                    onFire: (p) => _act(() => repo.fire(who: 'principal', id: p.id), 'Уволен'),
                   ),
                 ),
               );
@@ -216,7 +216,7 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                   onPressed: st.ready || st.busy
                       ? null
                       : () => r.read(interSeasonControllerProvider.notifier).markReady(),
-                  child: Text(st.ready ? 'Waiting for other players…' : 'Ready for new season'),
+                  child: Text(st.ready ? 'Ожидаем других игроков…' : 'Готов к новому сезону'),
                 );
               }),
             ),

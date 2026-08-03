@@ -16,11 +16,11 @@ class BudgetBar extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       child: budget.when(
         loading: () => const LinearProgressIndicator(),
-        error: (_, __) => const Text('Budget unavailable'),
+        error: (_, __) => const Text('Бюджет недоступен'),
         data: (b) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Budget: ${b.budget}   Tokens: ${b.tokens}'),
+            Text('Бюджет: ${b.budget}   Токены: ${b.tokens}'),
             const SizedBox(height: 4),
             LinearProgressIndicator(value: (b.budget / 110).clamp(0.0, 1.0)),
           ],

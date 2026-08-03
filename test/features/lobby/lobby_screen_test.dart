@@ -115,7 +115,7 @@ void main() {
     verifyNever(() => repo.resetGroup());
     expect(find.byType(AlertDialog), findsOneWidget);
 
-    await tester.tap(find.text('End game'));
+    await tester.tap(find.text('Завершить'));
     await tester.pumpAndSettle();
 
     verify(() => repo.resetGroup()).called(1);
@@ -138,7 +138,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('end_game_early_button')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text('Отмена'));
     await tester.pumpAndSettle();
 
     verifyNever(() => repo.resetGroup());

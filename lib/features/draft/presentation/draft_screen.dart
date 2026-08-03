@@ -36,14 +36,14 @@ class DraftScreen extends ConsumerWidget {
     final takenPrincipalIds = players.map((p) => p.teamPrincipal).whereType<int>().toSet();
 
     String turnTitle() {
-      if (draft.isMyTurn) return 'Your pick (round ${draft.round + 1})';
+      if (draft.isMyTurn) return 'Ваш выбор (круг ${draft.round + 1})';
       final currentId = draft.currentUserId;
       if (currentId != null) {
         for (final p in players) {
-          if (p.id == currentId) return '${p.name} is picking (round ${draft.round + 1})';
+          if (p.id == currentId) return 'Выбирает ${p.name} (круг ${draft.round + 1})';
         }
       }
-      return 'Waiting for other players';
+      return 'Ожидаем других игроков';
     }
 
     Future<void> pickPilot(int id) async {
@@ -65,11 +65,11 @@ class DraftScreen extends ConsumerWidget {
             IconButton(
               key: const Key('refresh_turn_button'),
               icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh turn status',
+              tooltip: 'Обновить состояние хода',
               onPressed: () => ref.read(draftControllerProvider.notifier).refreshTurnState(),
             ),
           ],
-          bottom: const TabBar(tabs: [Tab(text: 'Pilots'), Tab(text: 'Teams'), Tab(text: 'Principals')]),
+          bottom: const TabBar(tabs: [Tab(text: 'Пилоты'), Tab(text: 'Команды'), Tab(text: 'Руководители')]),
         ),
         body: Column(
           children: [
@@ -142,6 +142,6 @@ class _History extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(8),
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        child: Text('Picks made: $count'),
+        child: Text('Выборов сделано: $count'),
       );
 }

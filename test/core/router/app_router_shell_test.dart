@@ -51,8 +51,8 @@ void main() {
       child: MaterialApp.router(routerConfig: router),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Standings'), findsWidgets);
-    expect(find.text('WDC'), findsOneWidget);
+    expect(find.text('Зачёт'), findsWidgets);
+    expect(find.text('Личный зачёт'), findsOneWidget);
     // Dispose synchronously, before the test body returns: seasonStateProvider
     // now holds a Timer.periodic (5s poll), and flutter_test's pending-timer
     // invariant check runs before addTearDown callbacks would fire, so an

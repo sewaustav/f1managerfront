@@ -45,7 +45,7 @@ class _BaseInvestmentFormState extends State<BaseInvestmentForm> {
           FilledButton(
             onPressed: () =>
                 widget.onSubmit(base: _base, engineer: _engineer, tube: _tube, sim: _sim),
-            child: const Text('Submit'),
+            child: const Text('Отправить'),
           ),
         ],
       );

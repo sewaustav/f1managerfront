@@ -33,30 +33,47 @@ class _DraftItemListState<T> extends State<DraftItemList<T>> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
           child: TextField(
-            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search'),
+            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Поиск'),
             onChanged: (v) => setState(() => _query = v),
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filtered.length,
-            itemBuilder: (_, i) {
-              final item = filtered[i];
-              final t = widget.title(item);
-              return ListTile(
-                title: Text(t),
-                subtitle: Text(widget.subtitle(item)),
-                trailing: FilledButton(
-                  key: Key('pick_$t'),
-                  onPressed: widget.enabled ? () => widget.onPick(item) : null,
-                  child: const Text('Pick'),
+        if (filtered.isEmpty)
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _query.isEmpty ? 'Свободных вариантов не осталось' : 'Ничего не найдено',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
-              );
-            },
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 12),
+              itemCount: filtered.length,
+              itemBuilder: (_, i) {
+                final item = filtered[i];
+                final t = widget.title(item);
+                return Card(
+                  child: ListTile(
+                    title: Text(t),
+                    subtitle: Text(widget.subtitle(item)),
+                    trailing: FilledButton(
+                      key: Key('pick_$t'),
+                      onPressed: widget.enabled ? () => widget.onPick(item) : null,
+                      child: const Text('Выбрать'),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }

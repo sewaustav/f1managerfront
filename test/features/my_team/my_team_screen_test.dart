@@ -76,9 +76,9 @@ void main() {
       child: const MaterialApp(home: MyTeamScreen()),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('No team picked yet'), findsOneWidget);
-    expect(find.text('No pilots picked yet'), findsOneWidget);
-    expect(find.text('No principal picked yet'), findsOneWidget);
+    expect(find.text('Команда ещё не выбрана'), findsOneWidget);
+    expect(find.text('Пилоты ещё не выбраны'), findsOneWidget);
+    expect(find.text('Руководитель ещё не выбран'), findsOneWidget);
   });
 
   testWidgets('organizer sees the end-game-early action', (tester) async {

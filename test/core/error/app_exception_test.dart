@@ -23,6 +23,6 @@ void main() {
       requestOptions: RequestOptions(path: '/x'),
       type: DioExceptionType.connectionTimeout,
     );
-    expect(mapDioError(e).message, contains('timeout'));
+    expect(mapDioError(e).message, 'Сервер не отвечает');
   });
 }

@@ -85,12 +85,12 @@ class _SetupFormState extends State<SetupForm> {
         const SizedBox(height: 12),
         Row(
           children: [
-            const Text('Settings angle:'),
+            const Text('Прижимная сила:'),
             const SizedBox(width: 12),
             SegmentedButton<int>(
               segments: const [
-                ButtonSegment(value: 0, label: Text('Rear')),
-                ButtonSegment(value: 1, label: Text('Front')),
+                ButtonSegment(value: 0, label: Text('Зад')),
+                ButtonSegment(value: 1, label: Text('Перёд')),
               ],
               selected: {_v.settingsAngle},
               onSelectionChanged: (s) => _update(_v.copyWith(settingsAngle: s.first)),

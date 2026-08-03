@@ -75,12 +75,12 @@ void main() {
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('Taken'), findsNothing);
 
-    await tester.tap(find.text('Teams'));
+    await tester.tap(find.text('Команды'));
     await tester.pumpAndSettle();
     expect(find.text('FreeTeam'), findsOneWidget);
     expect(find.text('TakenTeam'), findsNothing);
 
-    await tester.tap(find.text('Principals'));
+    await tester.tap(find.text('Руководители'));
     await tester.pumpAndSettle();
     expect(find.text('FreeBoss'), findsOneWidget);
     expect(find.text('TakenBoss'), findsNothing);
@@ -108,7 +108,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Alex is picking (round 2)'), findsOneWidget);
+    expect(find.text('Выбирает Alex (круг 2)'), findsOneWidget);
   });
 
   // The refresh action lets a player stuck on "Waiting for other players"

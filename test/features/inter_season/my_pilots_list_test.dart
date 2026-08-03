@@ -21,10 +21,10 @@ void main() {
 
     expect(find.text('Max'), findsOneWidget);
     expect(find.text('Lando'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Fire'), findsNWidgets(2));
+    expect(find.widgetWithText(OutlinedButton, 'Уволить'), findsNWidgets(2));
 
     await tester.tap(find
-        .descendant(of: find.byKey(const ValueKey(11)), matching: find.text('Fire')));
+        .descendant(of: find.byKey(const ValueKey(11)), matching: find.text('Уволить')));
     await tester.pump();
 
     expect(fired?.id, 11);

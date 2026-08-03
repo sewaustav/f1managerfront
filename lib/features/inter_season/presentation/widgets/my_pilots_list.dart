@@ -16,7 +16,7 @@ class MyPilotsList extends StatelessWidget {
               title: Text(p.name),
               trailing: OutlinedButton(
                 onPressed: () => onFire(p),
-                child: const Text('Fire'),
+                child: const Text('Уволить'),
               ),
             ),
         ],

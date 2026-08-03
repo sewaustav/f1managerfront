@@ -37,11 +37,11 @@ Future<int?> showEngineModal(
     return showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Engine'),
-        content: Text('This is a works team — engine is ${engineLabel(team.ice)}.'),
+        title: const Text('Мотор'),
+        content: Text('Это заводская команда — мотор ${engineLabel(team.ice)}.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, team.ice), child: const Text('Confirm')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, team.ice), child: const Text('Подтвердить')),
         ],
       ),
     );
@@ -50,7 +50,7 @@ Future<int?> showEngineModal(
   return showDialog<int>(
     context: context,
     builder: (ctx) => SimpleDialog(
-      title: const Text('Choose engine'),
+      title: const Text('Выбор мотора'),
       children: [
         for (final ice in choices)
           SimpleDialogOption(

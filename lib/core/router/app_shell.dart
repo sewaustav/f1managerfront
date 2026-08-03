@@ -7,10 +7,10 @@ class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   static const _destinations = [
-    (icon: Icons.sports_motorsports, label: 'Play'),
-    (icon: Icons.leaderboard, label: 'Standings'),
-    (icon: Icons.info_outline, label: 'Info'),
-    (icon: Icons.groups, label: 'My Team'),
+    (icon: Icons.sports_motorsports, label: 'Игра'),
+    (icon: Icons.leaderboard, label: 'Зачёт'),
+    (icon: Icons.info_outline, label: 'Справка'),
+    (icon: Icons.groups, label: 'Команда'),
   ];
 
   void _go(int i) => navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);

@@ -67,11 +67,11 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Preset name'),
+        title: const Text('Название пресета'),
         content: TextField(controller: ctrl, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text('Сохранить')),
         ],
       ),
     );
@@ -79,7 +79,7 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
 
   void _loadPreset(SetupPreset p, int pool) {
     if (presetTotal(p) > pool) {
-      showErrorSnackbar(context, 'Preset exceeds the available $pool tokens');
+      showErrorSnackbar(context, 'Пресет не влезает в доступные $pool токенов');
       return;
     }
     setState(() => _values = SetupValues(
@@ -94,7 +94,7 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
     final presets = ref.watch(setupPresetStoreProvider).load();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Token setup'),
+        title: const Text('Распределение токенов'),
         actions: [
           if (presets.isNotEmpty)
             PopupMenuButton<int>(
@@ -113,7 +113,7 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
         ],
       ),
       body: _submitted
-          ? const Center(child: Text('Setup submitted — waiting for season to start…'))
+          ? const Center(child: Text('Настройки отправлены — ждём старта сезона…'))
           : AsyncValueView<int>(
               value: pool,
               onRetry: () => ref.invalidate(tokenPoolProvider),
@@ -133,7 +133,7 @@ class _TokenSetupScreenState extends ConsumerState<TokenSetupScreen> {
                       onPressed: _submitting || !setupValid(_values, poolValue)
                           ? null
                           : () => _submit(poolValue),
-                      child: const Text('Submit'),
+                      child: const Text('Отправить'),
                     ),
                   ),
                 ],

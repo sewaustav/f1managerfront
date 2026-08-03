@@ -85,10 +85,10 @@ void main() {
       child: const MaterialApp(home: InterSeasonScreen()),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Transfers'), findsOneWidget);
-    expect(find.text('Principal'), findsOneWidget);
-    expect(find.text('Base'), findsOneWidget);
-    expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('Трансферы'), findsOneWidget);
+    expect(find.text('Руководитель'), findsOneWidget);
+    expect(find.text('База'), findsOneWidget);
+    expect(find.text('Готовность'), findsOneWidget);
   });
 
   testWidgets('Transfers tab shows roster, free pilot, owned pilot, and Fire buttons',
@@ -108,7 +108,7 @@ void main() {
     expect(find.text('Lando'), findsOneWidget);
     expect(find.text('Free'), findsOneWidget);
     expect(find.text('Owned'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, 'Fire'), findsNWidgets(2));
+    expect(find.widgetWithText(OutlinedButton, 'Уволить'), findsNWidgets(2));
   });
 
   testWidgets('tapping Fire on a roster pilot calls repo.fire and shows Pilot fired',
@@ -126,14 +126,14 @@ void main() {
     await tester.pumpAndSettle();
 
     final maxTile = find.byKey(const ValueKey(10));
-    final fireInMaxTile = find.descendant(of: maxTile, matching: find.text('Fire'));
+    final fireInMaxTile = find.descendant(of: maxTile, matching: find.text('Уволить'));
     await tester.tap(fireInMaxTile);
     await tester.pump();
     await tester.pump();
 
     expect(repo.firedWho, 'pilot');
     expect(repo.firedId, 10);
-    expect(find.text('Pilot fired'), findsOneWidget);
+    expect(find.text('Пилот уволен'), findsOneWidget);
   });
 
   testWidgets('buying the free pilot shows Bought', (tester) async {
@@ -149,11 +149,11 @@ void main() {
     await tester.pumpAndSettle();
 
     final freeTile = find.ancestor(of: find.text('Free'), matching: find.byType(ListTile));
-    final buyButton = find.descendant(of: freeTile, matching: find.widgetWithText(FilledButton, 'Buy'));
+    final buyButton = find.descendant(of: freeTile, matching: find.widgetWithText(FilledButton, 'Купить'));
     await tester.tap(buyButton);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Bought'), findsOneWidget);
+    expect(find.text('Куплено'), findsOneWidget);
   });
 
   testWidgets('buying the owned pilot shows Offer sent', (tester) async {
@@ -169,7 +169,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final ownedTile = find.ancestor(of: find.text('Owned'), matching: find.byType(ListTile));
-    final buyButton = find.descendant(of: ownedTile, matching: find.widgetWithText(FilledButton, 'Buy'));
+    final buyButton = find.descendant(of: ownedTile, matching: find.widgetWithText(FilledButton, 'Купить'));
     await tester.tap(buyButton);
     await tester.pump();
     await tester.pump();
@@ -296,7 +296,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(InterSeasonScreen), findsOneWidget);
 
-      await tester.tap(find.text('Standings'));
+      await tester.tap(find.text('Зачёт'));
       await tester.pumpAndSettle();
 
       // InterSeasonScreen is mounted offstage (IndexedStack keeps every

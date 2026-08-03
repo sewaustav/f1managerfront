@@ -54,10 +54,10 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
         body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
           const CircularProgressIndicator(),
           const SizedBox(height: 12),
-          const Text('Waiting for other players…'),
+          const Text('Ожидаем других игроков…'),
           if (seasonState != null) ...[
             const SizedBox(height: 8),
-            Text('${seasonState.submittedSetups.length} / ${seasonState.totalPlayers} submitted'),
+            Text('Отправили: ${seasonState.submittedSetups.length} из ${seasonState.totalPlayers}'),
           ],
         ])),
       );
@@ -69,7 +69,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Race setup'),
+        title: const Text('Настройка на гонку'),
         actions: [
           if (presets.isNotEmpty)
             PopupMenuButton<int>(
@@ -87,7 +87,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
         value: tracks,
         onRetry: () => ref.invalidate(tracksProvider),
         data: (list) {
-          if (list.isEmpty) return const Center(child: Text('No track data'));
+          if (list.isEmpty) return const Center(child: Text('Нет данных о трассах'));
           // Prefer the track for the current stage (server-driven); fall back
           // to the manual picker only when season state is unavailable/stale.
           final stageIdx = _stageTrackIndex(seasonState?.stage, list.length);
@@ -101,7 +101,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
                   children: [
                     IconButton(onPressed: idx > 0 ? () => setState(() => _trackIndex = idx - 1) : null,
                         icon: const Icon(Icons.chevron_left)),
-                    Text('Track ${idx + 1}/${list.length}'),
+                    Text('Трасса ${idx + 1} из ${list.length}'),
                     IconButton(onPressed: idx < list.length - 1 ? () => setState(() => _trackIndex = idx + 1) : null,
                         icon: const Icon(Icons.chevron_right)),
                   ],
@@ -129,7 +129,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
                         : null,
                     orElse: () => null,
                   ),
-                  child: const Text('Confirm setup'),
+                  child: const Text('Подтвердить настройки'),
                 ),
               ),
             ],
@@ -141,7 +141,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
 
   void _loadPreset(SetupPreset p, int pool) {
     if (presetTotal(p) > pool) {
-      showErrorSnackbar(context, 'Preset exceeds the available $pool tokens');
+      showErrorSnackbar(context, 'Пресет не влезает в доступные $pool токенов');
       return;
     }
     setState(() => _values = SetupValues(
@@ -189,7 +189,7 @@ class _ResultsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Results — stage ${result.stage}')),
+      appBar: AppBar(title: Text('Результаты — этап ${result.stage}')),
       body: Column(
         children: [
           Expanded(
@@ -198,12 +198,12 @@ class _ResultsView extends StatelessWidget {
               child: SingleChildScrollView(
                 child: DataTable(
                   columns: const [
-                    DataColumn(label: Text('Pos')),
-                    DataColumn(label: Text('Pilot')),
-                    DataColumn(label: Text('Team')),
-                    DataColumn(label: Text('Quali')),
-                    DataColumn(label: Text('Pts')),
-                    DataColumn(label: Text('DNF')),
+                    DataColumn(label: Text('#')),
+                    DataColumn(label: Text('Пилот')),
+                    DataColumn(label: Text('Команда')),
+                    DataColumn(label: Text('Кв.')),
+                    DataColumn(label: Text('Очки')),
+                    DataColumn(label: Text('Сход')),
                   ],
                   rows: [
                     for (final r in result.results)
@@ -225,7 +225,7 @@ class _ResultsView extends StatelessWidget {
             child: FilledButton(
               key: const Key('next_stage'),
               onPressed: onNext,
-              child: const Text('Next stage'),
+              child: const Text('Следующий этап'),
             ),
           ),
         ],

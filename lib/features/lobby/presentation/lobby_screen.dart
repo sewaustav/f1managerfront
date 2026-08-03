@@ -19,7 +19,7 @@ class LobbyScreen extends ConsumerWidget {
     });
     final hasGroup = ref.watch(hasGroupProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Lobby')),
+      appBar: AppBar(title: const Text('Лобби')),
       body: hasGroup ? const _GroupLobby() : const _CreateJoin(),
     );
   }
@@ -53,35 +53,35 @@ class _CreateJoinState extends ConsumerState<_CreateJoin> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('Create a group', style: Theme.of(context).textTheme.titleMedium),
+        Text('Создать группу', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         TextField(key: const Key('group_name_field'), controller: _name,
-            decoration: const InputDecoration(labelText: 'Group name')),
+            decoration: const InputDecoration(labelText: 'Название группы')),
         const SizedBox(height: 8),
         TextField(key: const Key('create_password_field'), controller: _createPw, obscureText: true,
-            decoration: const InputDecoration(labelText: 'Password')),
+            decoration: const InputDecoration(labelText: 'Пароль')),
         const SizedBox(height: 12),
         FilledButton(
           key: const Key('create_group_button'),
           onPressed: loading ? null : () => ctrl.create(_name.text.trim(), _createPw.text),
-          child: const Text('Create'),
+          child: const Text('Создать'),
         ),
         const Divider(height: 48),
-        Text('Join a group', style: Theme.of(context).textTheme.titleMedium),
+        Text('Войти в группу', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         TextField(key: const Key('group_id_field'), controller: _joinId,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Group ID')),
+            decoration: const InputDecoration(labelText: 'ID группы')),
         const SizedBox(height: 8),
         TextField(key: const Key('join_password_field'), controller: _joinPw, obscureText: true,
-            decoration: const InputDecoration(labelText: 'Password')),
+            decoration: const InputDecoration(labelText: 'Пароль')),
         const SizedBox(height: 12),
         FilledButton(
           key: const Key('join_group_button'),
           onPressed: loading
               ? null
               : () => ctrl.join(int.tryParse(_joinId.text.trim()) ?? -1, _joinPw.text),
-          child: const Text('Join'),
+          child: const Text('Войти'),
         ),
       ],
     );
@@ -104,18 +104,18 @@ class _GroupLobby extends ConsumerWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogCtx) => AlertDialog(
-          title: const Text('End the game early?'),
+          title: const Text('Завершить игру досрочно?'),
           content: const Text(
-              'This wipes everyone\'s draft picks, teams, and budget back to a fresh lobby. '
-              'This cannot be undone.'),
+              'Все выборы драфта, команды и бюджеты сбросятся до пустого лобби. '
+              'Отменить это будет нельзя.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Отмена'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('End game'),
+              child: const Text('Завершить'),
             ),
           ],
         ),
@@ -130,18 +130,18 @@ class _GroupLobby extends ConsumerWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogCtx) => AlertDialog(
-          title: const Text('Leave the group?'),
+          title: const Text('Выйти из группы?'),
           content: const Text(
-              'Your pilots go back into the pool and any transfer offers you '
-              'have open are withdrawn. You can rejoin with the group ID.'),
+              'Ваши пилоты вернутся в общий пул, а открытые предложения по трансферам '
+              'будут отозваны. Вернуться можно по ID группы.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Отмена'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogCtx).pop(true),
-              child: const Text('Leave'),
+              child: const Text('Выйти'),
             ),
           ],
         ),
@@ -161,13 +161,13 @@ class _GroupLobby extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     key: const Key('group_id_display'),
-                    'Group ID: $groupId  (share this to invite others)',
+                    'ID группы: $groupId  (сообщите его друзьям)',
                   ),
                 ),
                 IconButton(
                   key: const Key('copy_group_id_button'),
                   icon: const Icon(Icons.copy),
-                  tooltip: 'Copy group ID',
+                  tooltip: 'Скопировать ID группы',
                   onPressed: () => Clipboard.setData(ClipboardData(text: '$groupId')),
                 ),
               ],
@@ -177,16 +177,33 @@ class _GroupLobby extends ConsumerWidget {
           child: AsyncValueView<List<Player>>(
             value: players,
             onRetry: () => ref.invalidate(playersProvider),
-            data: (list) => ListView(
-              children: [
-                for (final p in list)
-                  ListTile(
-                    leading: const Icon(Icons.person),
-                    title: Text(p.name),
-                    subtitle: Text('Budget ${p.budget}  •  Tokens ${p.tokens}'),
+            data: (list) => list.isEmpty
+                ? const Center(child: Text('Пока никого нет'))
+                : ListView(
+                    padding: const EdgeInsets.only(top: 4, bottom: 12),
+                    children: [
+                      for (final p in list)
+                        Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              child: Text(
+                                p.name.isEmpty ? '?' : p.name.characters.first.toUpperCase(),
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            title: Text(p.name.isEmpty ? 'Игрок ${p.id}' : p.name),
+                            subtitle:
+                                Text('Бюджет ${p.budget}  •  Токены ${p.tokens}'),
+                            trailing: p.id == groupId
+                                ? const _OrganizerBadge()
+                                : null,
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
         ),
         Padding(
@@ -196,25 +213,47 @@ class _GroupLobby extends ConsumerWidget {
               FilledButton(
                 key: const Key('start_draft_button'),
                 onPressed: () => ctrl.startDraft(),
-                child: const Text('Start draft'),
+                child: const Text('Начать драфт'),
               ),
               const SizedBox(height: 8),
               if (isOrganizer)
                 OutlinedButton(
                   key: const Key('end_game_early_button'),
                   onPressed: confirmAndReset,
-                  child: const Text('End game early'),
+                  child: const Text('Завершить игру'),
                 )
               else
                 OutlinedButton(
                   key: const Key('leave_group_button'),
                   onPressed: confirmAndLeave,
-                  child: const Text('Leave group'),
+                  child: const Text('Выйти из группы'),
                 ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Метка организатора: у него единственного есть право завершить игру,
+/// поэтому в составе полезно видеть, кто это.
+class _OrganizerBadge extends StatelessWidget {
+  const _OrganizerBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'организатор',
+        style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+      ),
     );
   }
 }
