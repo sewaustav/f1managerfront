@@ -23,6 +23,10 @@ class LobbyRepository {
   /// game early". Organizer-only server-side (a group's id is
   /// deterministically its creator's own userID).
   Future<void> resetGroup() => _dio.post('/groups/reset');
+
+  /// Выход из группы. Организатору сервер откажет — группа заведена под его
+  /// id, ему нужно завершать игру целиком.
+  Future<void> leaveGroup() => _dio.post('/groups/leave');
 }
 
 final lobbyRepositoryProvider =

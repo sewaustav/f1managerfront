@@ -14,6 +14,7 @@ import 'package:f1manager/features/draft/data/draft_repository.dart';
 import 'package:f1manager/features/draft/model/budget.dart';
 import 'package:f1manager/features/inter_season/data/inter_season_repository.dart';
 import 'package:f1manager/features/inter_season/model/my_team_summary.dart';
+import 'package:f1manager/features/inter_season/model/transfer_offer.dart';
 import 'package:f1manager/features/inter_season/presentation/inter_season_screen.dart';
 import 'package:f1manager/core/models/team.dart';
 
@@ -56,6 +57,20 @@ class _FakeRepo extends InterSeasonRepository {
 
   @override
   Future<void> buyPilot({required int pilotId, required int price}) async {}
+
+  List<TransferOffer> offers = const [];
+  int? respondedOfferId;
+  bool? respondedAccept;
+
+  @override
+  Future<List<TransferOffer>> getIncomingOffers() async => offers;
+
+  @override
+  Future<void> respondToOffer({required int offerId, required bool accept}) async {
+    respondedOfferId = offerId;
+    respondedAccept = accept;
+    offers = offers.where((o) => o.id != offerId).toList();
+  }
 }
 
 void main() {
@@ -158,84 +173,63 @@ void main() {
     await tester.tap(buyButton);
     await tester.pump();
     await tester.pump();
-    expect(find.text('Offer sent'), findsOneWidget);
+    expect(find.text('Предложение отправлено'), findsOneWidget);
   });
 
-  testWidgets(
-      'season_started while an incoming-offer dialog is open does not throw '
-      '(mounted guard after showIncomingOfferDialog)', (tester) async {
-    final ws = StreamController<WsMessage>.broadcast();
-    addTearDown(ws.close);
-
-    // Both routes render through a keyless CustomTransitionPage, so
-    // go_router/Flutter treat the /inter-season -> /token-setup navigation as
-    // an in-place content swap of the same Page rather than a page
-    // add/remove with an exit transition. That disposes InterSeasonScreen's
-    // State immediately, while the offer dialog it opened (a separate,
-    // still-mounted route pushed on top) is left open/orphaned — exactly the
-    // "widget disposed while the dialog is still pending" situation the
-    // mounted guard protects against.
-    Page<void> samePage(Widget child) => CustomTransitionPage<void>(
-          child: child,
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-          transitionsBuilder: (_, __, ___, c) => c,
-        );
-
-    final router = GoRouter(
-      initialLocation: '/inter-season',
-      routes: [
-        GoRoute(
-          path: '/inter-season',
-          pageBuilder: (_, __) => samePage(const InterSeasonScreen()),
-        ),
-        GoRoute(
-          path: '/token-setup',
-          pageBuilder: (_, __) => samePage(const Scaffold(body: Text('token-setup'))),
-        ),
-      ],
-    );
+  // Обмен между игроками больше не живёт во всплывающем диалоге, привязанном
+  // к моменту запроса покупателя: предложения хранятся на сервере и
+  // отвечаются обычным запросом, поэтому владелец может быть офлайн.
+  testWidgets('входящее предложение видно и принимается', (tester) async {
+    final repo = _FakeRepo();
+    repo.offers = [
+      const TransferOffer(
+          id: 5, pilotId: 7, pilotName: 'Леклер', buyerId: 2, buyerName: 'Второй', price: 40),
+    ];
 
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        wsMessagesProvider.overrideWith((ref) => ws.stream),
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
         wsServiceProvider.overrideWithValue(_FakeWs()),
         draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
-        interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(repo),
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: const MaterialApp(home: InterSeasonScreen()),
     ));
     await tester.pumpAndSettle();
 
-    // Deliver a transfer_request over the WS stream: the screen's ref.listen
-    // picks it up and opens the incoming-offer dialog via _drainOffers().
-    ws.add(const WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40}));
-    await tester.pump();
-    await tester.pumpAndSettle();
-    expect(find.text('Transfer offer'), findsOneWidget);
+    expect(find.text('Леклер'), findsOneWidget);
+    expect(find.textContaining('Второй'), findsOneWidget);
 
-    // Deliver season_started while the dialog's Future is still pending.
-    // This drives context.go('/token-setup'), which (per the router setup
-    // above) disposes InterSeasonScreen's State right away, well before the
-    // still-open dialog is ever resolved.
-    ws.add(const WsMessage('season_started', {'type': 'season_started'}));
-    for (var i = 0; i < 5; i++) {
-      await tester.pump();
-    }
-    expect(find.byType(InterSeasonScreen), findsNothing,
-        reason: 'InterSeasonScreen should already be disposed at this point');
-    expect(find.text('Transfer offer'), findsOneWidget,
-        reason: 'the offer dialog is orphaned, still open on top of /token-setup');
-
-    // Now resolve the orphaned dialog (as if the user finally dismissed it).
-    // Previously, the ref.read(...) calls after the await in _drainOffers()
-    // ran on the already-disposed ConsumerState and threw
-    // "Cannot use "ref" after the widget was disposed."
-    await tester.tap(find.text('Decline'));
-    await tester.pump();
+    await tester.tap(find.byKey(const Key('accept_offer_5')));
     await tester.pumpAndSettle();
 
-    expect(tester.takeException(), isNull);
+    expect(repo.respondedOfferId, 5);
+    expect(repo.respondedAccept, isTrue);
+  });
+
+  testWidgets('входящее предложение отклоняется', (tester) async {
+    final repo = _FakeRepo();
+    repo.offers = [
+      const TransferOffer(
+          id: 6, pilotId: 7, pilotName: 'Леклер', buyerId: 2, buyerName: 'Второй', price: 40),
+    ];
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        wsMessagesProvider.overrideWith((ref) => const Stream<WsMessage>.empty()),
+        wsServiceProvider.overrideWithValue(_FakeWs()),
+        draftRepositoryProvider.overrideWithValue(_FakeDraftRepo()),
+        interSeasonRepositoryProvider.overrideWithValue(repo),
+      ],
+      child: const MaterialApp(home: InterSeasonScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('decline_offer_6')));
+    await tester.pumpAndSettle();
+
+    expect(repo.respondedOfferId, 6);
+    expect(repo.respondedAccept, isFalse);
   });
 
   group('offstage nav guard', () {

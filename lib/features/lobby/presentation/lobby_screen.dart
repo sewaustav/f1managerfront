@@ -126,6 +126,31 @@ class _GroupLobby extends ConsumerWidget {
       ref.invalidate(playersProvider);
     }
 
+    Future<void> confirmAndLeave() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('Leave the group?'),
+          content: const Text(
+              'Your pilots go back into the pool and any transfer offers you '
+              'have open are withdrawn. You can rejoin with the group ID.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: const Text('Leave'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await ctrl.leaveGroup();
+      ref.invalidate(seasonStateProvider);
+    }
+
     return Column(
       children: [
         if (groupId != null)
@@ -173,14 +198,19 @@ class _GroupLobby extends ConsumerWidget {
                 onPressed: () => ctrl.startDraft(),
                 child: const Text('Start draft'),
               ),
-              if (isOrganizer) ...[
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              if (isOrganizer)
                 OutlinedButton(
                   key: const Key('end_game_early_button'),
                   onPressed: confirmAndReset,
                   child: const Text('End game early'),
+                )
+              else
+                OutlinedButton(
+                  key: const Key('leave_group_button'),
+                  onPressed: confirmAndLeave,
+                  child: const Text('Leave group'),
                 ),
-              ],
             ],
           ),
         ),

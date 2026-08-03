@@ -6,9 +6,10 @@ import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
 import '../application/inter_season_controller.dart';
 import '../application/inter_season_data_providers.dart';
+import '../model/transfer_offer.dart';
 import '../data/inter_season_repository.dart';
 import 'widgets/base_investment_form.dart';
-import 'widgets/incoming_offer_dialog.dart';
+import 'widgets/incoming_offers_list.dart';
 import 'widgets/my_pilots_list.dart';
 import 'widgets/principal_hire_list.dart';
 import 'widgets/transfer_list.dart';
@@ -20,24 +21,31 @@ class InterSeasonScreen extends ConsumerStatefulWidget {
 }
 
 class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
-  bool _dialogOpen = false;
+  int? _respondingTo;
 
-  Future<void> _drainOffers() async {
-    if (_dialogOpen) return;
-    final offers = ref.read(interSeasonControllerProvider).incomingOffers;
-    if (offers.isEmpty) return;
-    _dialogOpen = true;
-    final offer = offers.first;
-    final accept = await showIncomingOfferDialog(context, offer);
-    if (!mounted) return;
-    _dialogOpen = false;
-    if (accept != null) {
-      ref.read(interSeasonControllerProvider.notifier).respondToOffer(offer, accept: accept);
-    } else {
-      // dismissed → decline so the queue drains
-      ref.read(interSeasonControllerProvider.notifier).respondToOffer(offer, accept: false);
+  /// Ответ на предложение идёт обычным HTTP-запросом: предложение хранится
+  /// на сервере, поэтому отвечать можно когда угодно, а не только пока
+  /// покупатель ждёт на линии.
+  Future<void> _respond(TransferOffer offer, bool accept) async {
+    setState(() => _respondingTo = offer.id);
+    try {
+      await ref
+          .read(interSeasonRepositoryProvider)
+          .respondToOffer(offerId: offer.id, accept: accept);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(accept ? 'Трансфер принят' : 'Предложение отклонено')),
+      );
+      ref.invalidate(incomingOffersProvider);
+      ref.invalidate(myTeamProvider);
+      ref.invalidate(interSeasonBudgetProvider);
+      ref.invalidate(freePilotsProvider);
+      ref.invalidate(ownedPilotsProvider);
+    } catch (e) {
+      if (mounted) showErrorSnackbar(context, e);
+    } finally {
+      if (mounted) setState(() => _respondingTo = null);
     }
-    if (mounted) _drainOffers();
   }
 
   Future<void> _act(Future<void> Function() action, String ok) async {
@@ -57,7 +65,6 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(interSeasonControllerProvider, (prev, next) {
-      if (next.incomingOffers.isNotEmpty) _drainOffers();
       if (next.seasonStarted && (prev?.seasonStarted != true)) {
         if (isCurrentLocation(context, '/inter-season')) context.go('/token-setup');
       }
@@ -104,6 +111,29 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                 value: myTeam,
                 data: (t) => ListView(
                   children: [
+                    // Входящие предложения — первым блоком: это единственное,
+                    // что требует реакции игрока прямо сейчас.
+                    Consumer(builder: (_, r2, __) {
+                      final offers =
+                          r2.watch(incomingOffersProvider).valueOrNull ??
+                              const <TransferOffer>[];
+                      if (offers.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Text('Предложения по вашим пилотам',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          IncomingOffersList(
+                            offers: offers,
+                            busyOfferId: _respondingTo,
+                            onRespond: _respond,
+                          ),
+                        ],
+                      );
+                    }),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text('My pilots', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -139,7 +169,7 @@ class _InterSeasonScreenState extends ConsumerState<InterSeasonScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         onBuy: (p, price) => _act(
-                            () => repo.buyPilot(pilotId: p.id, price: price), 'Offer sent'),
+                            () => repo.buyPilot(pilotId: p.id, price: price), 'Предложение отправлено'),
                       ),
                     ),
                   ],

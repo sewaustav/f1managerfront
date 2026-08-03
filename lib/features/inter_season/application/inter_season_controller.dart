@@ -6,14 +6,12 @@ import '../model/transfer_events.dart';
 
 class InterSeasonState {
   const InterSeasonState({
-    this.incomingOffers = const [],
     this.seasonStarted = false,
     this.ready = false,
     this.busy = false,
     this.error,
   });
 
-  final List<TransferRequest> incomingOffers;
   final bool seasonStarted;
   final bool ready;
   final bool busy;
@@ -22,14 +20,12 @@ class InterSeasonState {
   static const _sentinel = Object();
 
   InterSeasonState copyWith({
-    List<TransferRequest>? incomingOffers,
     bool? seasonStarted,
     bool? ready,
     bool? busy,
     Object? error = _sentinel,
   }) =>
       InterSeasonState(
-        incomingOffers: incomingOffers ?? this.incomingOffers,
         seasonStarted: seasonStarted ?? this.seasonStarted,
         ready: ready ?? this.ready,
         busy: busy ?? this.busy,
@@ -43,23 +39,11 @@ class InterSeasonController extends AutoDisposeNotifier<InterSeasonState> {
     ref.listen(wsMessagesProvider, (_, next) {
       final msg = next.valueOrNull;
       if (msg == null) return;
-      final offer = transferRequestFromMessage(msg);
-      if (offer != null) {
-        state = state.copyWith(incomingOffers: [...state.incomingOffers, offer]);
-        return;
-      }
       if (isSeasonStarted(msg)) {
         state = state.copyWith(seasonStarted: true);
       }
     });
     return const InterSeasonState();
-  }
-
-  void respondToOffer(TransferRequest offer, {required bool accept}) {
-    ref.read(wsServiceProvider).send(transferResponsePayload(pilotId: offer.pilotId, accept: accept));
-    state = state.copyWith(
-      incomingOffers: state.incomingOffers.where((o) => o.pilotId != offer.pilotId).toList(),
-    );
   }
 
   Future<void> markReady() async {

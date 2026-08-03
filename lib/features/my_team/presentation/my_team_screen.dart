@@ -46,6 +46,31 @@ class MyTeamScreen extends ConsumerWidget {
       ref.invalidate(myTeamBudgetProvider);
     }
 
+    Future<void> confirmAndLeave() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('Leave the group?'),
+          content: const Text(
+              'Your pilots go back into the pool and any transfer offers you '
+              'have open are withdrawn. You can rejoin with the group ID.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: const Text('Leave'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await ctrl.leaveGroup();
+      ref.invalidate(seasonStateProvider);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Team'),
@@ -56,6 +81,13 @@ class MyTeamScreen extends ConsumerWidget {
               icon: const Icon(Icons.stop_circle_outlined),
               tooltip: 'End game early',
               onPressed: confirmAndReset,
+            )
+          else if (groupId != null)
+            IconButton(
+              key: const Key('leave_group_button'),
+              icon: const Icon(Icons.exit_to_app),
+              tooltip: 'Leave group',
+              onPressed: confirmAndLeave,
             ),
           IconButton(
             icon: const Icon(Icons.logout),

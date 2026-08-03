@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/auth_state.dart';
 import '../../../core/api/jwt_decode.dart';
@@ -13,8 +15,16 @@ final hasGroupProvider = StateProvider<bool>((ref) => false);
 /// own JWT; on join we already typed the id in, so we just remember it.
 final myGroupIdProvider = StateProvider<int?>((ref) => null);
 
-final playersProvider = FutureProvider.autoDispose<List<Player>>(
-    (ref) => ref.watch(lobbyRepositoryProvider).getPlayers());
+/// Как часто лобби перечитывает состав. О новом участнике сервер никому не
+/// сообщает, а WS-доставка тут показала себя ненадёжной — без опроса
+/// организатор просто не видит, что к нему кто-то зашёл.
+const lobbyPollInterval = Duration(seconds: 3);
+
+final playersProvider = FutureProvider.autoDispose<List<Player>>((ref) {
+  final timer = Timer.periodic(lobbyPollInterval, (_) => ref.invalidateSelf());
+  ref.onDispose(timer.cancel);
+  return ref.watch(lobbyRepositoryProvider).getPlayers();
+});
 
 class LobbyController extends AutoDisposeAsyncNotifier<void> {
   @override
@@ -57,6 +67,18 @@ class LobbyController extends AutoDisposeAsyncNotifier<void> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
         () => ref.read(lobbyRepositoryProvider).resetGroup());
+  }
+
+  /// Выход из группы — в отличие от resetGroup здесь меняется именно
+  /// членство, поэтому локальное состояние группы сбрасываем и возвращаем
+  /// игрока к экрану создания/входа.
+  Future<void> leaveGroup() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+        () => ref.read(lobbyRepositoryProvider).leaveGroup());
+    if (state.hasError) return;
+    ref.read(myGroupIdProvider.notifier).state = null;
+    ref.read(hasGroupProvider.notifier).state = false;
   }
 }
 

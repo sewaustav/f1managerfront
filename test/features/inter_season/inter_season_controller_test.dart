@@ -23,26 +23,6 @@ class _FakeRepo extends InterSeasonRepository {
 }
 
 void main() {
-  test('incoming transfer_request appears; respond sends transfer_response + dequeues', () async {
-    final ws = StreamController<WsMessage>.broadcast();
-    final fakeWs = _FakeWs();
-    final c = ProviderContainer(overrides: [
-      wsMessagesProvider.overrideWith((ref) => ws.stream),
-      wsServiceProvider.overrideWithValue(fakeWs),
-      interSeasonRepositoryProvider.overrideWithValue(_FakeRepo()),
-    ]);
-    addTearDown(c.dispose);
-    c.listen(interSeasonControllerProvider, (_, __) {}); // start listening (keeps autoDispose alive)
-
-    ws.add(const WsMessage('transfer_request', {'type': 'transfer_request', 'pilot_id': 7, 'price': 40}));
-    await Future<void>.delayed(Duration.zero);
-    final offer = c.read(interSeasonControllerProvider).incomingOffers.single;
-    expect(offer.pilotId, 7);
-
-    c.read(interSeasonControllerProvider.notifier).respondToOffer(offer, accept: true);
-    expect(fakeWs.sent.single, {'type': 'transfer_response', 'pilot_id': 7, 'accept': true});
-    expect(c.read(interSeasonControllerProvider).incomingOffers, isEmpty);
-  });
 
   test('season_started sets flag', () async {
     final ws = StreamController<WsMessage>.broadcast();
