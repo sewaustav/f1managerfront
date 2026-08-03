@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/async_value_view.dart';
 import '../../../shared/widgets/error_snackbar.dart';
+import '../../../core/api/auth_state.dart';
 import '../../../core/ws/ws_providers.dart';
 import '../../season/application/season_state_provider.dart';
 import '../application/lobby_controller.dart';
@@ -95,7 +96,34 @@ class _GroupLobby extends ConsumerWidget {
     ref.watch(wsMessagesProvider);
     final players = ref.watch(playersProvider);
     final groupId = ref.watch(myGroupIdProvider);
+    final myId = ref.watch(currentUserIdProvider);
+    final isOrganizer = groupId != null && myId != null && myId == groupId;
     final ctrl = ref.read(lobbyControllerProvider.notifier);
+
+    Future<void> confirmAndKick(Player p) async {
+      final name = p.name.isEmpty ? 'Игрок ${p.id}' : p.name;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          title: Text('Удалить $name?'),
+          content: const Text(
+              'Его пилоты вернутся в общий пул, а открытые предложения по '
+              'трансферам будут отозваны. Он сможет зайти обратно по ID группы.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Отмена'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: const Text('Удалить'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      await ctrl.kickPlayer(p.id);
+    }
 
     Future<void> confirmAndLeave() async {
       final confirmed = await showDialog<bool>(
@@ -170,7 +198,14 @@ class _GroupLobby extends ConsumerWidget {
                                 Text('Бюджет ${p.budget}  •  Токены ${p.tokens}'),
                             trailing: p.id == groupId
                                 ? const _OrganizerBadge()
-                                : null,
+                                : (isOrganizer
+                                    ? IconButton(
+                                        key: Key('kick_${p.id}'),
+                                        icon: const Icon(Icons.person_remove_outlined),
+                                        tooltip: 'Удалить из группы',
+                                        onPressed: () => confirmAndKick(p),
+                                      )
+                                    : null),
                           ),
                         ),
                     ],

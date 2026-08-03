@@ -6,6 +6,7 @@ import 'package:f1manager/core/api/auth_state.dart';
 import 'package:f1manager/features/lobby/application/lobby_controller.dart';
 import 'package:f1manager/features/lobby/data/lobby_repository.dart';
 import 'package:f1manager/features/lobby/model/group_requests.dart';
+import 'package:f1manager/features/lobby/model/player.dart';
 import 'package:f1manager/features/lobby/presentation/lobby_screen.dart';
 
 class _MockRepo extends Mock implements LobbyRepository {}
@@ -122,5 +123,54 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(() => repo.leaveGroup());
+  });
+
+  testWidgets('организатор может удалить участника', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getPlayers()).thenAnswer(
+        (_) async => const [Player(id: 42, name: 'Хозяин'), Player(id: 7, name: 'Гость')]);
+    when(() => repo.kickPlayer(any())).thenAnswer((_) async {});
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        lobbyRepositoryProvider.overrideWithValue(repo),
+        hasGroupProvider.overrideWith((ref) => true),
+        myGroupIdProvider.overrideWith((ref) => 42),
+        currentUserIdProvider.overrideWith((ref) => 42),
+      ],
+      child: const MaterialApp(home: LobbyScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    // у самого организатора кнопки удаления нет
+    expect(find.byKey(const Key('kick_42')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('kick_7')));
+    await tester.pumpAndSettle();
+    verifyNever(() => repo.kickPlayer(any()));
+
+    await tester.tap(find.text('Удалить'));
+    await tester.pumpAndSettle();
+    verify(() => repo.kickPlayer(7)).called(1);
+  });
+
+  testWidgets('обычный участник не видит кнопок удаления', (tester) async {
+    final repo = _MockRepo();
+    when(() => repo.getPlayers()).thenAnswer(
+        (_) async => const [Player(id: 42, name: 'Хозяин'), Player(id: 7, name: 'Гость')]);
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        lobbyRepositoryProvider.overrideWithValue(repo),
+        hasGroupProvider.overrideWith((ref) => true),
+        myGroupIdProvider.overrideWith((ref) => 42),
+        currentUserIdProvider.overrideWith((ref) => 7),
+      ],
+      child: const MaterialApp(home: LobbyScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('kick_7')), findsNothing);
+    expect(find.byKey(const Key('kick_42')), findsNothing);
   });
 }

@@ -24,9 +24,13 @@ class LobbyRepository {
   /// deterministically its creator's own userID).
   Future<void> resetGroup() => _dio.post('/groups/reset');
 
-  /// Выход из группы. Организатору сервер откажет — группа заведена под его
-  /// id, ему нужно завершать игру целиком.
+  /// Выход из группы — доступен всем, включая организатора: группа переживает
+  /// его уход, а вернуться можно по тому же ID.
   Future<void> leaveGroup() => _dio.post('/groups/leave');
+
+  /// Удаление участника организатором.
+  Future<void> kickPlayer(int userId) =>
+      _dio.post('/groups/kick', data: {'user_id': userId});
 }
 
 final lobbyRepositoryProvider =

@@ -69,6 +69,15 @@ class LobbyController extends AutoDisposeAsyncNotifier<void> {
         () => ref.read(lobbyRepositoryProvider).resetGroup());
   }
 
+  /// Удаление участника организатором. Состав перечитываем сразу, не дожидаясь
+  /// следующего тика опроса, чтобы список отреагировал на нажатие.
+  Future<void> kickPlayer(int userId) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+        () => ref.read(lobbyRepositoryProvider).kickPlayer(userId));
+    ref.invalidate(playersProvider);
+  }
+
   /// Выход из группы — в отличие от resetGroup здесь меняется именно
   /// членство, поэтому локальное состояние группы сбрасываем и возвращаем
   /// игрока к экрану создания/входа.
