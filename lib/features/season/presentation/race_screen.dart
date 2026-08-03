@@ -123,7 +123,9 @@ class _RaceScreenState extends ConsumerState<RaceScreen> {
                   key: const Key('confirm_setup'),
                   onPressed: pool.maybeWhen(
                     data: (poolValue) => setupValid(_values, poolValue)
-                        ? () => ref.read(seasonControllerProvider.notifier).submitSetup(_payload())
+                        ? () => ref
+                            .read(seasonControllerProvider.notifier)
+                            .submitSetup(_payload(), stage: seasonState?.stage)
                         : null,
                     orElse: () => null,
                   ),
